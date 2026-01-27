@@ -1,3 +1,5 @@
 hello
+da hoan thanh tinh nang gio hang
+fixbug login thanh cong
 zoropolo
 cdskcdskcsd

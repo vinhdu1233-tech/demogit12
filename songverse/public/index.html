@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#d9ecfa"/>
+<title>SóngVerse 3D V5 • Học sóng cùng bạn bè</title>
+<link rel="stylesheet" href="/style.css"/>
+</head>
+<body>
+<canvas id="world" aria-label="Thế giới chibi 3D"></canvas>
+<div id="fallback" class="hidden">Trình duyệt không hỗ trợ WebGL. Hãy mở game bằng Chrome, Edge hoặc Safari phiên bản mới.</div>
+<div id="gameUI" class="hidden">
+ <div id="orientationNote" class="orientation-note" role="status">📱 Mẹo: Xoay ngang điện thoại để quan sát thế giới 3D rộng hơn.</div>
+ <header class="topbar">
+  <div class="brand"><span class="brandmark">〰</span><div><b>SóngVerse</b><small>V5 • PHÒNG THÍ NGHIỆM 3D</small></div></div>
+  <div class="class-pill">🏫 <span id="roomName">PHYS11</span><span class="dot"></span><span id="playerCount">1</span> trực tuyến</div>
+  <div class="top-actions"><span class="xp" id="xp">✦ 0 XP</span><button id="profileBtn" class="roundbtn" title="Tùy chỉnh nhân vật">🎨</button><button id="cameraResetBtn" class="roundbtn" title="Đặt lại camera" aria-label="Đặt lại góc nhìn">📷</button><button id="musicBtn" class="roundbtn" title="Bật nhạc nền" aria-label="Bật hoặc tắt nhạc nền" aria-pressed="false">🔇</button><label class="music-volume" title="Âm lượng nhạc"><span>♪</span><input id="musicVolume" type="range" min="0" max="0.65" step="0.01" value="0.26" aria-label="Âm lượng nhạc nền"/></label><button id="helpBtn" class="roundbtn" title="Cách chơi">❔</button><button id="logoutBtn" class="roundbtn" title="Đăng xuất">↪</button></div>
+ </header>
+ <aside class="quest-panel">
+  <div class="eyebrow">NHIỆM VỤ CHƯƠNG 2 <button id="closeMapBtn" class="close-map" type="button" aria-label="Đóng danh sách trạm">✕</button></div><h2>Khám phá thế giới sóng <span>🌊</span></h2>
+  <p>Đi tới các trạm, thử thí nghiệm và trả lời câu hỏi để nhận điểm.</p>
+  <div class="progressline"><div id="progressFill"></div></div><div class="progresscaption"><span id="progressText">0/22 câu hoàn thành</span><span id="badgeLabel">Tân binh sóng</span></div>
+  <div id="stationLinks" class="station-links"></div>
+  <p class="controls-hint">⌨️ WASD / phím mũi tên để đi • <b>E</b> để tương tác • kéo chuột trên cảnh, dùng hai thanh camera để xoay 360° và ngẩng/cúi • cuộn để zoom • 📷 đặt lại • J/L xoay trái/phải • I/K ngẩng/cúi • R đặt lại</p><div class="pedagogy-note"><b>Học để hiểu, không chỉ lấy điểm.</b><span>Ở mỗi trạm: Dự đoán → thử nghiệm → quan sát → giải thích → tự kiểm tra.</span></div>
+ </aside>
+ <div class="world-title"><span>🌈 WAVE CAMPUS</span><strong>Chạm vào trạm học để khám phá</strong><small id="nearHint">Khám phá cùng bạn bè!</small></div>
+ <aside class="chat-panel" id="chatPanel">
+  <div class="chat-header"><div><b>💬 Bạn cùng lớp</b><span id="chatOnline">Đang kết nối...</span></div><button id="toggleChat" class="mini-btn">−</button></div>
+  <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+  <form id="chatForm" class="chat-form"><input id="chatInput" autocomplete="off" maxlength="120" placeholder="Gửi lời chào..."/><button title="Gửi" type="submit">➤</button></form>
+ </aside>
+ <div id="actionHint" class="action-hint hidden">Nhấn <kbd>E</kbd> để mở trạm</div>
+ <section class="mobile-hud" aria-label="Điều khiển trên điện thoại">
+  <div class="joystick-zone" id="joystickZone" role="group" aria-label="Cần điều khiển di chuyển">
+   <div class="joystick-base"><div class="joystick-stick" id="joystickStick"></div></div>
+   <span>DI CHUYỂN</span>
+  </div>
+  <div class="mobile-actions"><span class="camera-hint">↔↕ Vuốt để xoay camera • 📷 đặt lại</span><button id="mobileInteract" class="interact-btn" type="button">🔎 Khám phá trạm</button><button id="mobileMapBtn" class="map-btn" type="button">☰ Danh sách trạm</button></div>
+ </section>
+ <div class="camera-controller" id="cameraController" aria-label="Điều khiển camera">
+  <div class="camera-controller-title"><span>📷 GÓC NHÌN 360°</span><output id="cameraAngleLabel" aria-live="off">37° · 11°</output></div>
+  <div id="cameraPad" class="camera-pad" role="group" aria-label="Giữ và kéo để xoay góc nhìn 3D"><span>↔ XOAY ↕</span><small>GIỮ & KÉO</small></div>
+  <label class="camera-range">Xoay 360°<input id="yawSlider" type="range" min="0" max="360" value="37" step="1" aria-label="Xoay camera quanh nhân vật 360 độ"></label><label class="camera-range">Ngẩng / cúi<input id="pitchSlider" type="range" min="-10" max="76" value="5" step="1" aria-label="Độ cao camera"></label><div class="camera-buttons"><button type="button" data-orbit="left" title="Xoay trái" aria-label="Camera xoay trái">↶</button><button type="button" data-orbit="up" title="Nhìn từ trên" aria-label="Camera nâng lên">↑</button><button type="button" data-orbit="down" title="Nhìn ngang" aria-label="Camera hạ xuống">↓</button><button type="button" data-orbit="right" title="Xoay phải" aria-label="Camera xoay phải">↷</button><button id="cameraZoomIn" type="button" aria-label="Phóng gần">＋</button><button id="cameraZoomOut" type="button" aria-label="Thu xa">－</button></div>
+ </div>
+ <div id="friendLabels" aria-hidden="true"></div>
+</div>
+<div id="toast" class="toast hidden" role="status"></div>
+<!-- AUTH -->
+<div id="authOverlay" class="overlay">
+ <div class="auth-scene"><div class="auth-art"><div class="wave-doodle">〰〰〰</div><span class="bubble b1">🌊</span><span class="bubble b2">✨</span><span class="bubble b3">🧠</span><div class="chibi-emoji">👩🏻‍🚀</div><h1>Học sóng,<br/><em>chơi cùng nhau.</em></h1><p>Khám phá sóng cơ và sóng âm: từ nén–giãn tới âm sắc, cường độ và decibel trong thế giới 3D.</p></div>
+ <div class="auth-card"><div class="pill">VẬT LÝ 11 • CHƯƠNG 2</div><h2>Chào mừng đến <span>SóngVerse!</span></h2><p class="muted">Tạo tài khoản và vào phòng lớp của bạn.</p>
+  <div class="auth-tabs"><button class="active" data-mode="register">Tạo tài khoản</button><button data-mode="login">Đăng nhập</button></div>
+  <form id="authForm" class="auth-form">
+   <label>Tên đăng nhập<input id="username" maxlength="18" minlength="3" required autocomplete="username" placeholder="Ví dụ: song11a1"/></label>
+   <label id="nicknameWrap">Biệt danh (không cần tên thật)<input id="nickname" maxlength="20" placeholder="Ví dụ: Sóng Xanh"/></label>
+   <label>Mật khẩu<input id="password" type="password" minlength="8" required autocomplete="new-password" placeholder="Ít nhất 8 kí tự"/></label>
+   <label>Mã phòng lớp<input id="roomInput" maxlength="18" required placeholder="Ví dụ: 11A1-SONG" value="11A1-SONG"/></label>
+   <button class="primary-btn" type="submit" id="authSubmit">Tạo nhân vật & vào thế giới ➜</button>
+  </form><p id="authError" class="error hidden"></p><p class="auth-note">🔒 Không cần email hay tên thật. Chỉ nhập biệt danh để bảo vệ quyền riêng tư.</p>
+ </div></div>
+</div>
+<!-- DRAWERS -->
+<div id="shade" class="shade hidden"></div>
+<section class="drawer hidden" id="lessonDrawer" role="dialog" aria-modal="true" aria-label="Trạm học sóng">
+ <div class="drawer-heading"><div><span class="eyebrow" id="lessonEyebrow">TRẠM 01</span><h2 id="lessonTitle">Thế giới sóng</h2></div><button class="closebtn" data-close="lesson">✕</button></div>
+ <div class="drawer-scroll">
+  <p id="lessonIntro" class="lesson-intro"></p>
+  <div class="learning-path"><b>Quy trình khám phá</b><span>① Dự đoán</span><span>② Điều chỉnh thí nghiệm</span><span>③ Giải thích kết quả</span><span>④ Tự kiểm tra</span></div><div id="lessonDemo"></div><div class="explain-card" id="lessonExplain"></div><div class="reflection-card"><label for="reflectionInput"><b>✍ Nhật kí khoa học</b><small>Hãy tự viết một điều em vừa quan sát và giải thích vì sao. Ghi chú được lưu trên thiết bị này.</small></label><textarea id="reflectionInput" rows="3" maxlength="450" placeholder="Em dự đoán rằng… Sau khi thử, em nhận thấy…"></textarea><div class="reflection-controls"><span id="reflectionStatus" aria-live="polite">Chưa ghi chú</span><button id="saveReflection" type="button">Lưu ghi chú</button></div></div>
+  <div class="quiz-area"><div class="eyebrow">🎯 THỬ THÁCH NHẬN XP</div><div id="quizContainer"></div></div>
+ </div>
+</section>
+<section class="drawer hidden" id="profileDrawer" role="dialog" aria-modal="true" aria-label="Tùy chỉnh nhân vật">
+ <div class="drawer-heading"><div><span class="eyebrow">NHÂN VẬT CỦA BẠN</span><h2>Chibi Studio 🎨</h2></div><button class="closebtn" data-close="profile">✕</button></div>
+ <div class="drawer-scroll">
+  <div class="preview-card"><div id="avatarPreview" class="avatar-preview">🧑‍🎓</div><div><strong id="profileName">Nhân vật</strong><div id="profileScore">0 XP đã đạt</div></div></div>
+  <label class="field-label">Biệt danh<input id="editNickname" maxlength="20"/></label>
+  <div id="customControls"></div><button id="saveProfile" class="primary-btn">Lưu diện mạo ✨</button>
+ </div>
+</section>
+<section class="drawer hidden" id="helpDrawer" role="dialog" aria-modal="true" aria-label="Hướng dẫn">
+ <div class="drawer-heading"><div><span class="eyebrow">HƯỚNG DẪN</span><h2>Cách chơi 🎮</h2></div><button class="closebtn" data-close="help">✕</button></div>
+ <div class="drawer-scroll info-copy"><p><b>1.</b> Tạo tài khoản và nhập cùng một <b>mã phòng lớp</b> với các bạn để nhìn thấy nhau trong thế giới 3D.</p><p><b>2.</b> Máy tính dùng <b>WASD / mũi tên</b> để đi, kéo chuột để xoay. Hướng W luôn đi ra xa camera và S đi về phía camera, kể cả sau khi xoay. Trên điện thoại dùng <b>joystick bên trái</b> để di chuyển và <b>vuốt vùng trống</b> để xoay ngang và lên/xuống góc nhìn. Nút Khám phá mở trạm khi đến gần.</p><p><b>3.</b> Lại gần cột trạm học và nhấn <b>E</b>, hoặc chạm trực tiếp vào tên trạm bên trái. Trong mỗi trạm có thí nghiệm, công thức và câu hỏi.</p><p><b>4.</b> Mỗi câu trả lời đúng lần đầu được <b>100 XP</b>. Điểm được lưu theo tài khoản. Có thể đổi nhân vật chibi ở nút 🎨, chỉnh camera bằng 📷 và bật nhạc vui nhộn bằng 🎵.</p><p><b>5.</b> Trạm Sóng âm: tìm hiểu nguồn âm, dải tần số, độ cao/âm sắc, cường độ và decibel. Dùng nút nghe thử ở âm lượng thấp, không phát hạ âm hoặc siêu âm.</p><p><b>6.</b> Nếu lớp bật trò chuyện, chỉ gửi nội dung học tập và giao tiếp lịch sự. Không chia sẻ thông tin riêng tư. Giáo viên nên giám sát khi cho học sinh dùng chat.</p><p><b>7.</b> Tại mỗi trạm, hãy nêu <b>dự đoán</b> trước khi kéo thanh thí nghiệm, quan sát phần tử, rồi ghi <b>giải thích</b> vào Nhật kí khoa học.</p><div class="explain-card"><b>Kiến thức từ tài liệu lớp 11</b><p>Phân loại sóng ngang/dọc (trang 3), các đại lượng và v = λf (trang 5), độ lệch pha Δφ = 2πd/λ (trang 6), bài tập Đề số 2 (trang 25–26), Sóng âm (trang 32–35).</p></div></div>
+</section>
+<script type="module" src="/game.js"></script>
+</body></html>

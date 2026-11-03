@@ -1,0 +1,6 @@
+data/
+tests/
+*.zip
+.git/
+.DS_Store
+node_modules/

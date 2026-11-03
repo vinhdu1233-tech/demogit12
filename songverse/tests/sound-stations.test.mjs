@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+const game=readFileSync(new URL('../public/game.js',import.meta.url),'utf8');const server=readFileSync(new URL('../server.mjs',import.meta.url),'utf8');const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+test('five grounded sound stations, each with two graded questions',()=>{for(const id of ['amnguon','amtanso','amsac','amcuongdo','amdecibel']){assert.match(game,new RegExp("id:'"+id+"'"));assert.match(game,new RegExp("'"+id+"-1'"));assert.match(game,new RegExp("'"+id+"-2'"));assert.match(server,new RegExp("'"+id+"-1'"));assert.match(server,new RegExp("'"+id+"-2'"));}assert.match(game,/TOTAL_QUESTIONS=stations.reduce/);assert.match(game,/I=P\/\(4πR²\)/)});
+test('explicit yaw and pitch controls and head-hair local transform',()=>{assert.match(html,/id="yawSlider"/);assert.match(html,/id="pitchSlider"/);assert.match(game,/head\('sphere',hair/);assert.match(game,/side-lock anchored to the head/);assert.match(game,/try-sound-btn/)});
+
+test('range focus does not disable WASD, and progress denominator follows station count',()=>{assert.match(game,/input:not\(\[type=range\]\)/);assert.match(game,/100\*c\/TOTAL_QUESTIONS/)});

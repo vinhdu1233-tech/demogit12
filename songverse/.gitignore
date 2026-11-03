@@ -1,0 +1,6 @@
+data/*
+!data/.gitkeep
+.env
+.env.*
+node_modules/
+.DS_Store

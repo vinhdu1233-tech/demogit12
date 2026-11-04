@@ -64,7 +64,7 @@ function updateStationLinks(){
    button.append(symbol,desc,done);
    button.addEventListener('click',()=>{document.querySelector('.quest-panel').classList.remove('mobile-open');openLesson(s.id)});
    const travel=document.createElement('button');travel.className='travel-btn';travel.type='button';travel.title='Dịch chuyển tới trạm '+s.name;travel.textContent='📍';travel.setAttribute('aria-label','Đi tới trạm '+s.name);
-   travel.addEventListener('click',()=>{state.x=s.x;state.z=s.z+3.7;state.keys.clear();document.querySelector('.quest-panel').classList.remove('mobile-open');state.ws?.readyState===1&&state.ws.send(JSON.stringify({type:'move',x:state.x,z:state.z,rot:state.rotation}));toast('Đã đến '+s.name+' · nhấn Khám phá để học!')});
+   travel.addEventListener('click',()=>{state.x=s.x;state.z=s.z+3.7;state.keys.clear();document.querySelector('.quest-panel').classList.remove('mobile-open');state.ws?.readyState===1&&state.ws.send(JSON.stringify({type:'travel',chapter:s.chapter,index:stationGroups.find(g=>g.number===s.chapter).stations.indexOf(s)}));toast('Đã đến '+s.name+' · nhấn Khám phá để học!')});
    row.append(button,travel);panel.append(row);
   }
  }
@@ -271,38 +271,115 @@ function init3D(){const canvas=$('world');const gl=canvas.getContext('webgl',{an
 }
 function draw(type,color,x,y,z,sx=1,sy=1,sz=1,rot=0){if(!R)return;const {gl,loc,meshes}=R,mesh=meshes[type];gl.bindBuffer(gl.ARRAY_BUFFER,mesh.pb);gl.enableVertexAttribArray(loc.a);gl.vertexAttribPointer(loc.a,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,mesh.nb);gl.enableVertexAttribArray(loc.n);gl.vertexAttribPointer(loc.n,3,gl.FLOAT,false,0,0);gl.uniformMatrix4fv(loc.M,false,model(x,y,z,sx,sy,sz,rot));gl.uniform3fv(loc.C,rgb(color));gl.drawArrays(gl.TRIANGLES,0,mesh.count)}
 const lowPower=(isTouchUI()||Number(navigator.deviceMemory||8)<=4);
-function ground(){draw('box','#87BE91',0,-.36,0,49,.7,49);
- // checker pastel tiles and paths
- for(let i=-22;i<=22;i+=3.3){draw('box','#F4DCC7',0,.009,i,3.3,.05,2.7);draw('box','#F4DCC7',i,.015,0,2.7,.05,3.3)}
- // islands station pastel circles
- const colors=['#DBF5E6','#F7DFEB','#DCEBFD','#F8E9C9','#E9DCFB','#FFE6C8','#D8F2FA','#EFF8D6','#E9E3FC','#E5F4F1','#FAE6D9'];stations.forEach((s,i)=>{draw('cyl',colors[i%colors.length],s.x,.045,s.z,8,.1,8)});
- // grass tufts and decorative trees
- for(let i=0;i<(lowPower?17:42);i++){const x=Math.sin(i*4.73)*22,z=Math.cos(i*3.87)*22;if(Math.hypot(x,z)<4)continue;const n=1+(i%4)*.2;draw('cyl','#8D745C',x,.48*n,z,.28*n,.96*n,.28*n);draw('sphere',i%3===0?'#D8E9A0':'#71BDA0',x,1.48*n,z,1.16*n,1.1*n,1.16*n);draw('sphere',i%4===0?'#F7BCD2':'#95D0AA',x+.35,1.9*n,z,.68*n,.67*n,.68*n);}
- for(let i=0;i<(lowPower?30:70);i++){const x=Math.sin(i*31.43)*23,z=Math.cos(i*22.83)*23;if(Math.abs(x)<2.4||Math.abs(z)<2.4)continue;draw('sphere',i%3===0?'#FFF3C5':'#F7CFDF',x,.09,z,.13,.13,.13)}
- // central pond
- draw('cyl','#9ED9E6',0,.06,0,6,.07,6);draw('cyl','#CCEAF5',0,.103,0,4.9,.024,4.9);
- for(let r=0;r<(lowPower?2:3);r++){const radius=.5+((state.t*.72+r*.85)%3);for(let i=0;i<(lowPower?14:25);i++){const a=i*Math.PI*2/(lowPower?14:25);draw('sphere','#67B9DA',Math.cos(a)*radius,.15,Math.sin(a)*radius,.055,.026,.055)}}
- // little benches
- for(const [x,z] of [[-6,5],[5,-4],[7,5],[-5,-5]]){draw('box','#D59C7D',x,.46,z,1.4,.18,.48);draw('box','#D59C7D',x,.83,z+.23,1.4,.53,.17);draw('box','#806A5A',x-.5,.23,z,.12,.43,.12);draw('box','#806A5A',x+.5,.23,z,.12,.43,.12)}
+// Larger six-zone campus, with draw distance culling for low-power phones.
+function ground(){
+ draw('box','#8ac6a0',0,-.42,20,124,.76,160);
+ // Main promenade and cross-campus routes.
+ draw('box','#f6e5d0',0,.015,20,3.2,.07,148);
+ for(const zone of chapterZones){
+   const tint=zone.number===1?'#c9f4e4':zone.number===2?'#fce3c6':zone.number===3?'#dcd9fa':zone.number===4?'#b8ebf5':zone.number===5?'#ffe1eb':'#fae9b5';
+   draw('box','#f5dfc9',0,.018,zone.z,72,.045,3.1);
+   draw('cyl',tint,zone.x,.006,zone.z,48,.045,48);
+   draw('cyl','#ffffff',zone.x,.06,zone.z,31,.052,31);
+   draw('cyl',tint,zone.x,.084,zone.z,30.4,.036,30.4);
+   // Zone icon tower near center.
+   if(Math.hypot(zone.x-state.x,zone.z-state.z)<55){
+     draw('cyl','#fbfcff',zone.x,.87,zone.z,1.35,1.66,1.35);
+     draw('sphere',zone.color,zone.x,1.87+Math.sin(state.t*1.5+zone.number)*.08,zone.z,1.1,.48,1.1);
+     for(let j=0;j<9;j++){
+       const a=j*Math.PI*2/9+state.t*.28;
+       draw('sphere',zone.color,zone.x+Math.cos(a)*2.2,1.48+.14*Math.sin(state.t*2+j),zone.z+Math.sin(a)*2.2,.15,.15,.15);
+     }
+   }
+   for(let j=0;j<9;j++){
+     const a=(j+.4)*Math.PI*2/9;const x=zone.x+Math.cos(a)*24,z=zone.z+Math.sin(a)*24;
+     if(Math.hypot(x-state.x,z-state.z)>35)continue;
+     draw('cyl','#a78d6d',x,.6,z,.28,1.2,.28);
+     draw('sphere',j%3?'#74c5a7':'#f3cfbd',x,1.65,z,1.2,1.35,1.2);
+   }
+ }
+ // Water ripple plaza at the center of the water-interference district.
+ if(Math.hypot(state.x-31,state.z-23)<48){
+   draw('cyl','#66bfdd',31,.12,23,13,.16,13);
+   draw('cyl','#9de0f1',31,.22,23,11,.04,11);
+   for(let r=0;r<3;r++){const rad=.6+((state.t*.7+r*1.6)%5);for(let k=0;k<12;k++){const a=k*Math.PI/6;draw('sphere','#d1faff',31+Math.cos(a)*rad,.27,23+Math.sin(a)*rad,.085,.035,.085)}}
+ }
+ // Tiny flowers only near player to avoid thousands of triangles on phones.
+ for(let i=0;i<(lowPower?35:80);i++){
+   const x=Math.sin(i*17.53)*54,z=20+Math.cos(i*12.17)*68;
+   if(Math.hypot(x-state.x,z-state.z)>22)continue;
+   draw('sphere',i%2?'#ffdaee':'#fff4b8',x,.09,z,.12,.1,.12);
+ }
 }
-function stationStructures(){const t=state.t,l=state.lab,lambda=Math.max(.2,l.v/l.f);
- stations.forEach((s,i)=>{draw('cyl',['#69C9AF','#D886A8','#7DAADD','#DDAD6A','#A890DB','#F2AA73','#57A9CC','#B1BB76','#887FC8','#5DAF96','#CE977A'][i%11],s.x,.14,s.z,2.8,.33,2.8);
- draw('cyl','#F8FAFF',s.x,1.2,s.z,1.1,1.9,1.1);draw('sphere',['#74D9BB','#F6A6C2','#8FC5F1','#F4C57E','#BEABF0','#F3A26D','#69C6E9','#D0DFA1','#B3A6EC','#88D7B5','#E5B49A'][i%11],s.x,2.32+Math.sin(t*1.6+i)*.08,s.z,1.13,.42,1.13);
- draw('box','#FFFFFF',s.x,1.48,s.z+1,1.28,.58,.24);
- draw('sphere','#FFFFFF',s.x-.36,1.44,s.z+1.16,.12,.12,.08);draw('sphere','#FFFFFF',s.x+.36,1.44,s.z+1.16,.12,.12,.08);
- });
- // transverse rope: anchored particles move vertically while wave shape propagates
- for(let i=0;i<(lowPower?20:32);i++){const q=i/(lowPower?19:31),x=-20+q*12,z=-10.9;const u=l.A*Math.sin(2*Math.PI*(l.f*t-q*12/lambda));draw('sphere','#E577A9',x,1.1+u,z,.14,.14,.14);if(i%3===0)draw('sphere','#D0B4D3',x,.37,z,.06,.06,.06);}
- draw('box','#A982B8',-20,.9,-10.9,.18,1.6,.16);draw('box','#A982B8',-8,.9,-10.9,.18,1.6,.16);
- // longitudinal chain: x-axis displacement, not y
- for(let i=0;i<(lowPower?18:29);i++){const q=i/(lowPower?17:28),base=8+q*12,dx=.25*Math.sin(2*Math.PI*(l.f*t-q*12/lambda));draw('sphere','#64AFDE',base+dx,1.1,-10.9,.16,.16,.16);if(i%4===0)draw('sphere','#C9DCEB',base,.35,-10.9,.07,.07,.07)}
- // lambda wave left/top
- for(let i=0;i<34;i++){const x=-20+i*.36,y=.85+.64*Math.sin(2*Math.PI*(i*.36/4.5-t*.6));draw('sphere','#F3B759',x,y,14,.09,.09,.09)}
- // phase balloons
- const a=Math.sin(t*2*Math.PI*l.f),b=Math.sin(t*2*Math.PI*l.f-2*Math.PI*l.d);
- for(const [x,u,c] of [[9.3,a,'#AE91E8'],[18.6,b,'#EEA5CC']]){draw('cyl','#A7A3B2',x,.85,13.5,.08,1.6,.08);draw('sphere',c,x,2.15+u*.47,13.5,.5,.55,.5);}
- // challenge trophy
- draw('cyl','#E6BE69',0,3.05,18,.4,1,.4);draw('sphere','#FDE9A8',0,3.8,18,.51,.51,.51);
+function fxOrbit(s,i,color,t){
+ const count=lowPower?6:10;
+ const radius=1.56+Math.sin(t*.95+i)*.18;
+ for(let j=0;j<count;j++){const a=j*Math.PI*2/count+t*.5+i;
+   draw('sphere',color,s.x+Math.cos(a)*radius,2.86+.12*Math.sin(a*2+t),s.z+Math.sin(a)*radius,.11,.11,.11);
+ }
+}
+function stationStructures(){
+ const t=state.t;
+ for(let i=0;i<stations.length;i++){
+   const s=stations[i],dist=Math.hypot(s.x-state.x,s.z-state.z);
+   if(dist>33)continue;
+   const zone=chapterZones[s.chapter-1],color=zone.color;
+   const base=1.1+Math.sin(t*2.3+i*.83)*.045;
+   draw('cyl','#ffffff',s.x,.16,s.z,5.6,.25,5.6);
+   draw('cyl',color,s.x,.27,s.z,4.6,.2,4.6);
+   draw('cyl','#ffffff',s.x,1.14,s.z,1.35,1.55,1.35);
+   draw('sphere',color,s.x,2.25+Math.sin(t*1.8+i)*.085,s.z,base,.39,base);
+   draw('box','#ffffff',s.x,1.55,s.z+.98,1.3,.55,.15);
+   for(const side of [-1,1])draw('sphere','#e6ecf8',s.x+side*.3,1.54,s.z+1.12,.12,.12,.08);
+   fxOrbit(s,i,color,t);
+   const q=t*(s.chapter===2?2.8:1.8)+i*.62;
+   if(s.chapter===1){
+     // A transverse wave field rides along the mechanical-wave sculpture.
+     for(let j=0;j<10;j++){const v=j/9;draw('sphere','#e88fb8',s.x-2+v*4,3.7+Math.sin(v*7-q)*.45,s.z-.9,.095,.095,.095)}
+   }else if(s.chapter===2){
+     // Each acoustic instrument has its own animated pressure/echo pattern.
+     const speed=s.id==='amtanso'?2.3:s.id==='amcuongdo'?.75:s.id==='amdecibel'?1.25:1.65;
+     const size=s.id==='amsac'?.65:s.id==='amsieudung'?1.35:1;
+     for(let ring=0;ring<3;ring++){
+       const rr=.6+((t*speed+ring*.67+i*.19)%2.8)*size;
+       const dots=lowPower?8:12;
+       for(let j=0;j<dots;j++){const a=2*Math.PI*j/dots;
+         draw('sphere',ring===0?'#fff0a8':'#7de2ed',s.x+rr*Math.cos(a),2.45+Math.sin(q+ring)*.13,s.z+rr*Math.sin(a),.066,.065,.065)
+       }
+     }
+     if(s.id==='amcuongdo'||s.id==='amdecibel'||s.id==='amsac'){
+       for(let j=0;j<5;j++){const height=.3+Math.abs(Math.sin(q+j*1.3))*.85;draw('box',j%2?'#ffc58b':'#f6a2c5',s.x-1.1+j*.53,3.45+height*.5,s.z,.23,height,.22)}
+     }
+     if(s.id==='amphanxa'||s.id==='amsieudung'){draw('box','#fff2d4',s.x+2.6,1.4,s.z, .24,2,.8)}
+   }else if(s.chapter===3){
+     // Electromagnetic field components: two perpendicular colored ribbons.
+     for(let j=0;j<11;j++){const u=(j-5)*.4,sw=Math.sin(u*2.8-q);
+       draw('sphere','#e985c2',s.x+u,3.6+sw*.48,s.z,.1,.1,.1);
+       draw('sphere','#83a6f3',s.x+u,3.6,s.z+sw*.5,.09,.09,.09)
+     }
+   }else if(s.chapter===4){
+     // Two coherent sources produce outward moving circular water waves.
+     for(const dx of [-.8,.8])for(let j=0;j<2;j++){
+       const rr=.6+((t*.72+j*1.2+dx*.15)%2.45);
+       for(let k=0;k<(lowPower?9:13);k++){const a=k*2*Math.PI/(lowPower?9:13);
+         draw('sphere','#b9f3fa',s.x+dx+rr*Math.cos(a),.67,s.z+rr*Math.sin(a),.064,.047,.064)
+       }
+     }
+   }else if(s.chapter===5){
+     // Young / spectral colors: moving rays and split-light arcs.
+     const cols=['#f7a9b2','#f6d89e','#9cdbd9','#adb6f7','#d9a2e8'];
+     for(let j=0;j<5;j++){const u=(j-2)*.35;
+       draw('sphere',cols[j],s.x+u*2,3.2+.13*Math.sin(q+j),s.z+.7+.32*Math.sin(t+j),.12,.12,.12);
+       draw('sphere',cols[j],s.x+u*3,3.8+.10*Math.sin(q+j),s.z-1.1,.115,.115,.115);
+     }
+   }else if(s.chapter===6){
+     // A standing string: fixed nodes, bouncing antinodes.
+     const n=s.id==='dunghoam'?4:s.id==='dungtudo'?3:2;
+     for(let j=0;j<15;j++){const u=j/14;const amplitude=Math.sin(n*Math.PI*u)*Math.sin(q*2)*.55;
+       draw('sphere','#ffe3a7',s.x-2+u*4,3.65+amplitude,s.z-.8,.10,.10,.10)
+     }
+   }
+ }
 }
 function chibi(p,t,own=false){
  const a=p.avatar||{},skin=a.skin||'#F6C6A8',hair=a.hair||'#3D2B30',shirt=a.outfit||'#5966D8';

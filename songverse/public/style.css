@@ -361,3 +361,30 @@ html,body{width:100%;height:var(--game-viewport-height,100dvh);overflow:hidden;-
  #gameUI .chat-panel.chat-visible{top:calc(env(safe-area-inset-top,0px) + 39px)!important}
  #gameUI .chat-panel.chat-visible .chat-header{min-height:36px;height:36px;flex-basis:36px}
 }
+
+
+/* Desktop camera regression fix (V7.2).
+   The V7 full-viewport #gameUI box was intercepting mouse drags before they
+   reached the WebGL canvas. Keep the empty HUD transparent to pointer input,
+   but re-enable events on real controls. No mobile layout or gameplay changed. */
+#gameUI{pointer-events:none}
+#gameUI .quest-panel,
+#gameUI .quest-panel button,
+#gameUI .chat-panel,
+#gameUI .chat-panel input,
+#gameUI .chat-panel button,
+#gameUI .camera-controller,
+#gameUI .camera-controller input,
+#gameUI .camera-controller button,
+#gameUI .camera-pad,
+#gameUI .topbar>*,
+#gameUI .topbar button,
+#gameUI .world-billboard,
+#gameUI .station-hotspot,
+#gameUI .mobile-hud>*,
+#gameUI .mobile-hud button,
+#gameUI .joystick-zone,
+#gameUI .quick-stations.is-open,
+#gameUI .quick-stations button,
+#gameUI .mobile-chat-fab{pointer-events:auto}
+#friendLabels,#gameUI .station-hotspots,#gameUI .world-title,#gameUI .action-hint{pointer-events:none}

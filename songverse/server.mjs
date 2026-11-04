@@ -133,7 +133,7 @@ function broadcast(room,obj,except=null){let packet=JSON.stringify(obj);for(cons
 function roomState(room){return rosters().filter(p=>p.room===room).map(peerView);}
 const headers={
  '.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml',
- '.png':'image/png','.ico':'image/x-icon','.json':'application/json; charset=utf-8'
+ '.png':'image/png','.ico':'image/x-icon','.webmanifest':'application/manifest+json; charset=utf-8','.json':'application/json; charset=utf-8'
 };
 const server=http.createServer(async (req,res)=>{
   const host=req.headers.host||'localhost'; let url;

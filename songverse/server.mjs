@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { chapterZones, addedStations } from './public/chapter2.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(ROOT, 'public');
@@ -124,6 +125,7 @@ const QUIZZES={
  'amnguon-1':0,'amnguon-2':1,'amtanso-1':2,'amtanso-2':0,'amsac-1':0,'amsac-2':1,
  'amcuongdo-1':2,'amcuongdo-2':0,'amdecibel-1':0,'amdecibel-2':0
 };
+for (const station of addedStations) for (const q of station.quiz) QUIZZES[q[0]] = q[3];
 const active = new Map(); // each socket -> {user,room,x,z,...}
 const rosters = () => [...active.values()];
 function peerView(p){return {id:p.user.id,nickname:p.user.nickname,avatar:p.user.avatar,x:p.x,z:p.z,rot:p.rot,score:(p.user.cleared||[]).length*100};}
@@ -222,12 +224,26 @@ function onMessage(ws,msg){if(!msg||typeof msg!=='object')return;
     active.set(ws,{user,room,x:0,z:0,rot:0,lastMove:0,lastChat:0});sendFrame(ws,JSON.stringify({type:'welcome',room,id:user.id,players:roomState(room)}));broadcast(room,{type:'enter',player:peerView(active.get(ws))},ws);return;
  }
  const p=active.get(ws);if(!p)return;
+ if(msg.type==='travel'){
+  // Explicit fast travel is only allowed to one of 34 known campus stations.
+  const chapter=Number(msg.chapter),index=Number(msg.index);
+  const g=chapterZones.find(v=>v.number===chapter);
+  const count={1:9,2:7,3:4,4:4,5:5,6:5}[chapter];
+  if(!g||!Number.isInteger(index)||index<0||index>=count)return;
+  const angle=2*Math.PI*index/count-Math.PI/2;
+  const radius=count>=8?15:12;
+  p.x=g.x+Math.cos(angle)*radius;
+  p.z=g.z+Math.sin(angle)*radius+3.7;
+  p.lastMove=Date.now();
+  broadcast(p.room,{type:'move',id:p.user.id,x:p.x,z:p.z,rot:p.rot},ws);
+  return;
+ }
  if(msg.type==='move'){
   const now=Date.now();if(now-p.lastMove<60)return;const x=Number(msg.x),z=Number(msg.z),rot=Number(msg.rot);
   if(!Number.isFinite(x)||!Number.isFinite(z)||!Number.isFinite(rot))return;
   const dt=Math.min(1.5, Math.max(.07,(now-p.lastMove)/1000));
   const delta=Math.hypot(x-p.x,z-p.z);if(delta>9*dt+3)return;
-  p.lastMove=now;p.x=Math.max(-23,Math.min(23,x));p.z=Math.max(-23,Math.min(23,z));p.rot=rot;
+  p.lastMove=now;p.x=Math.max(-58,Math.min(58,x));p.z=Math.max(-50,Math.min(91,z));p.rot=rot;
   broadcast(p.room,{type:'move',id:p.user.id,x:p.x,z:p.z,rot:p.rot},ws);
  }
  if(msg.type==='chat' && CHAT_ENABLED){

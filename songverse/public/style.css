@@ -176,3 +176,11 @@
  .quest-panel.mobile-open{-webkit-overflow-scrolling:touch}
  .mobile-hud .mobile-actions,.mobile-hud .joystick-zone{pointer-events:auto}
 }
+
+/* Phone-width safeguard: never let class badge push important buttons off-screen. */
+@media(max-width:520px){
+ .topbar .class-pill{display:none!important}
+ .topbar .brand{margin-right:auto}
+ .top-actions{margin-left:auto}
+}
+@media(max-width:340px){.top-actions .roundbtn{width:25px!important;min-width:25px!important}.top-actions .xp{font-size:9px!important;padding:0 2px}}

@@ -41,12 +41,12 @@ const avatarLabels={style:{bob:'Tóc bob',spiky:'Tóc nhọn',bun:'Búi tóc',sh
 function toast(s){const t=$('toast');t.textContent=s;t.classList.remove('hidden');clearTimeout(state.notice);state.notice=setTimeout(()=>t.classList.add('hidden'),3500)}
 async function api(endpoint,body,authenticated=true){const headers={'Content-Type':'application/json'};if(authenticated&&state.token)headers.Authorization='Bearer '+state.token;const r=await fetch('/api/'+endpoint,{method:body===undefined?'GET':'POST',headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json();if(!r.ok)throw Error(data.error||'Có lỗi xảy ra');return data}
 function cleanRoom(v){return String(v||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,18)}
-function showAuth(){state.user=null;$('gameUI').classList.add('hidden');$('authOverlay').classList.remove('hidden');$('roomInput').value=state.room}
+function showAuth(){unreadMobileChat=0;$('chatPanel')?.classList.remove('chat-visible');syncMobileChat();state.user=null;$('gameUI').classList.add('hidden');$('authOverlay').classList.remove('hidden');$('roomInput').value=state.room}
 function loginReady(data){state.token=data.token;state.user=data.user;state.avatar={...data.user.avatar};localStorage.setItem('sv_token',data.token);state.room=cleanRoom($('roomInput').value)||state.room;localStorage.setItem('sv_room',state.room);startGame()}
 async function startGame(){
  $('authOverlay').classList.add('hidden');$('gameUI').classList.remove('hidden');$('roomName').textContent=state.room;updateProgress();initUI();if(!state.gl)init3D();connectWs();
- fetch('/api/health').then(r=>r.json()).then(cfg=>{if(cfg.chatEnabled===false){$('chatPanel').classList.add('hidden');toast('Phòng học đang tắt trò chuyện để tập trung học tập')}}).catch(()=>{});
- if(isTouchUI()){$('chatPanel').classList.add('collapsed');$('chatPanel').classList.remove('chat-visible');};toast('Chào mừng '+state.user.nickname+'! Hãy dự đoán, thí nghiệm và giải thích 🌊');
+ fetch('/api/health').then(r=>r.json()).then(cfg=>{if(cfg.chatEnabled===false){$('chatPanel').classList.add('hidden');$('mobileChatFab')?.classList.add('hidden');$('chatOpenBtn')?.classList.add('hidden');toast('Phòng học đang tắt trò chuyện để tập trung học tập')}else{$('mobileChatFab')?.classList.remove('hidden');$('chatOpenBtn')?.classList.remove('hidden')}}).catch(()=>{});
+ if(isTouchUI()){$('chatPanel').classList.add('collapsed');$('chatPanel').classList.remove('chat-visible');syncMobileChat()};toast('Chào mừng '+state.user.nickname+'! Hãy dự đoán, thí nghiệm và giải thích 🌊');
 }
 function updateProgress(){const c=(state.user?.cleared||[]).filter(id=>stations.some(s=>s.quiz.some(q=>q[0]===id))).length;$('xp').textContent='✦ '+(c*100)+' XP';$('progressFill').style.width=(100*c/TOTAL_QUESTIONS)+'%';$('progressText').textContent=c+'/'+TOTAL_QUESTIONS+' câu hoàn thành';$('badgeLabel').textContent=c===TOTAL_QUESTIONS?'🏆 Bậc thầy sóng':c>=Math.ceil(TOTAL_QUESTIONS*.65)?'🌟 Nhà khoa học':c>=Math.ceil(TOTAL_QUESTIONS*.25)?'🔎 Nhà khám phá':'Tân binh sóng';if($('profileScore'))$('profileScore').textContent=(c*100)+' XP đã đạt';updateStationLinks()}
 function updateStationLinks(){
@@ -92,7 +92,7 @@ function openQuickStations(){
   const title=document.createElement('b');title.textContent=s.emoji+' '+s.name;
   const desc=document.createElement('small');desc.textContent='Bài '+s.chapter+' · '+effectTags[s.id]+' · '+s.quiz.filter(q=>(state.user.cleared||[]).includes(q[0])).length+'/'+s.quiz.length+' câu';
   info.append(title,desc);
-  const learn=document.createElement('button');learn.className='quick-learn';learn.type='button';learn.textContent='Vào học';
+  const learn=document.createElement('button');learn.className='quick-learn';learn.type='button';learn.textContent='📝 Học & làm bài';
   learn.addEventListener('click',()=>{pane.classList.remove('is-open');pane.setAttribute('aria-hidden','true');openLesson(s.id)});
   const go=document.createElement('button');go.className='quick-travel';go.type='button';go.textContent='📍 Đến';go.addEventListener('click',()=>travelToStation(s));
   card.append(info,learn,go);list.append(card);
@@ -164,11 +164,35 @@ function setupImmersiveMode(){
  window.visualViewport?.addEventListener('resize',fit);
 }
 function jumpLessonTo(id){
- const target=$(id);
- if(!target||$('lessonDrawer').classList.contains('hidden'))return;
- if(id==='quizArea'){$('lessonDrawer').classList.add('show-quiz');target.scrollTop=0;}
+ const target=$(id);if(!target||$('lessonDrawer').classList.contains('hidden'))return;
+ const isLandscape=isTouchUI()&&window.innerWidth>window.innerHeight;
+ if(id==='quizArea'){$('lessonDrawer').classList.add('show-quiz');if(isLandscape){target.scrollTop=0;target.querySelector('.choices button:not([disabled])')?.focus({preventScroll:true});return;}}
  else $('lessonDrawer').classList.remove('show-quiz');
  target.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+
+// Mobile chat is a first-class classroom action, not a tiny top-bar icon.
+let unreadMobileChat=0;
+function syncMobileChat(){
+ const panel=$('chatPanel'),opened=panel?.classList.contains('chat-visible')&&!panel?.classList.contains('hidden');
+ const fab=$('mobileChatFab'),top=$('chatOpenBtn');
+ if(fab)fab.setAttribute('aria-expanded',String(Boolean(opened)));
+ if(top)top.setAttribute('aria-expanded',String(Boolean(opened)));
+ document.body.classList.toggle('mobile-chat-open',Boolean(opened));
+ const count=$('mobileChatUnread');
+ if(opened)unreadMobileChat=0;
+ if(count){count.textContent=unreadMobileChat>99?'99+':String(unreadMobileChat);count.classList.toggle('hidden',!unreadMobileChat);}
+ if(opened)$('chatMessages').scrollTop=$('chatMessages').scrollHeight;
+}
+function setMobileChat(open){
+ if(!state.user)return;
+ const panel=$('chatPanel');if(!panel||panel.classList.contains('hidden')){toast('Chat lớp đang được giáo viên tắt.');return}
+ closeQuickStations();document.querySelector('.quest-panel').classList.remove('mobile-open');
+ $('cameraController').classList.remove('is-open');
+ panel.classList.toggle('chat-visible',Boolean(open));
+ panel.classList.remove('collapsed');
+ syncMobileChat();
 }
 
 let uiInit=false;
@@ -180,12 +204,15 @@ function initUI(){if(uiInit)return;uiInit=true;
  setupCameraControls();
  setupMusic();
  const cameraToggle=$('mobileCameraBtn');if(cameraToggle)cameraToggle.addEventListener('click',()=>{$('cameraController').classList.toggle('is-open');cameraToggle.setAttribute('aria-expanded',String($('cameraController').classList.contains('is-open')))});
- const chatOpen=$('chatOpenBtn');if(chatOpen)chatOpen.addEventListener('click',()=>{$('cameraController').classList.remove('is-open');document.querySelector('.quest-panel').classList.remove('mobile-open');$('chatPanel').classList.toggle('chat-visible');$('chatPanel').classList.remove('collapsed');chatOpen.setAttribute('aria-expanded',String($('chatPanel').classList.contains('chat-visible')))});
+ const chatOpen=$('chatOpenBtn');if(chatOpen)chatOpen.addEventListener('click',()=>setMobileChat(!$('chatPanel').classList.contains('chat-visible')));
+ $('mobileChatFab')?.addEventListener('click',()=>setMobileChat(!$('chatPanel').classList.contains('chat-visible')));
+ new MutationObserver(syncMobileChat).observe($('chatPanel'),{attributes:true,attributeFilter:['class']});
+ syncMobileChat();
  $('logoutBtn').addEventListener('click',()=>{state.ws?.close();state.ws=null;state.token='';localStorage.removeItem('sv_token');state.others.clear();showAuth();});
  $('mobileHelpBtn')?.addEventListener('click',()=>{$('helpBtn').click()});
  $('mobileLogoutBtn')?.addEventListener('click',()=>{$('logoutBtn').click()});
  $('shade').addEventListener('click',closeDrawer);document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeDrawer));
- $('toggleChat').addEventListener('click',()=>{if(isTouchUI()){$('chatPanel').classList.remove('chat-visible');$('chatOpenBtn')?.setAttribute('aria-expanded','false')}else{$('chatPanel').classList.toggle('collapsed');$('toggleChat').textContent=$('chatPanel').classList.contains('collapsed')?'+':'−'}});
+ $('toggleChat').addEventListener('click',()=>{if(isTouchUI())setMobileChat(false);else{$('chatPanel').classList.toggle('collapsed');$('toggleChat').textContent=$('chatPanel').classList.contains('collapsed')?'+':'−'}});
  $('chatForm').addEventListener('submit',e=>{e.preventDefault();const text=$('chatInput').value.trim();if(text){if(state.ws?.readyState===1)state.ws.send(JSON.stringify({type:'chat',message:text}));else toast('Chưa kết nối phòng chung.');$('chatInput').value='';}});
  $('saveProfile').addEventListener('click',async()=>{try{const d=await api('profile',{nickname:$('editNickname').value,avatar:state.avatar});state.user=d.user;updateProgress();closeDrawer();toast('Đã lưu nhân vật chibi! 🎨')}catch(e){toast(e.message)}});
  // Use physical keyboard codes: movement stays predictable across input languages.
@@ -281,7 +308,7 @@ function saveReflection(){if(!state.station||!state.user)return;const value=$('r
 
 function setAuthMode(m){state.authMode=m;document.querySelectorAll('.auth-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));$('nicknameWrap').classList.toggle('hidden',m==='login');$('authSubmit').textContent=m==='login'?'Đăng nhập & vào thế giới ➜':'Tạo nhân vật & vào thế giới ➜';$('password').autocomplete=m==='login'?'current-password':'new-password';}
 function connectWs(){if(state.ws)state.ws.close();state.others.clear();const url=(location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws';const ws=new WebSocket(url);state.ws=ws;
- ws.onopen=()=>{state.connection='online';ws.send(JSON.stringify({type:'join',token:state.token,room:state.room}));$('chatOnline').textContent='Đã kết nối 🌱'};
+ ws.onopen=()=>{state.connection='online';ws.send(JSON.stringify({type:'join',token:state.token,room:state.room}));$('chatOnline').textContent='Đã kết nối 🌱';if($('mobileChatStatus'))$('mobileChatStatus').textContent='Đã kết nối · '+state.room};
  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return};if(m.type==='welcome'){state.others.clear();for(const p of m.players)if(p.id!==state.user.id)state.others.set(p.id,p);$('playerCount').textContent=1+state.others.size;systemMessage('Đã vào phòng '+m.room+'. Mời các bạn cùng tham quan!')}
  if(m.type==='enter'){if(m.player.id!==state.user.id){state.others.set(m.player.id,m.player);systemMessage(m.player.nickname+' vừa tham gia phòng ✨');}countPlayers();}
  if(m.type==='leave'){state.others.delete(m.id);countPlayers();}
@@ -290,10 +317,10 @@ function connectWs(){if(state.ws)state.ws.close();state.others.clear();const url
  if(m.type==='chat')message(m.from,m.message);
  if(m.type==='error')toast(m.message);
  };
- ws.onclose=()=>{if(state.ws!==ws||!state.user)return;state.connection='offline';$('chatOnline').textContent='Mất kết nối – đang thử lại';setTimeout(()=>{if(state.ws===ws&&state.user)connectWs()},3500)};
+ ws.onclose=()=>{if(state.ws!==ws||!state.user)return;state.connection='offline';$('chatOnline').textContent='Mất kết nối – đang thử lại';if($('mobileChatStatus'))$('mobileChatStatus').textContent='Đang kết nối lại…';setTimeout(()=>{if(state.ws===ws&&state.user)connectWs()},3500)};
 }
 function countPlayers(){$('playerCount').textContent=1+state.others.size;}
-function message(from,txt){const m=document.createElement('div');m.className='message';const b=document.createElement('b');b.textContent=from;m.append(b,document.createTextNode(txt));$('chatMessages').append(m);$('chatMessages').scrollTop=100000;while($('chatMessages').children.length>30)$('chatMessages').firstChild.remove();}
+function message(from,txt){if(isTouchUI()&&!$('chatPanel').classList.contains('chat-visible')&&from!==state.user?.nickname){unreadMobileChat++;syncMobileChat();}const m=document.createElement('div');m.className='message';const b=document.createElement('b');b.textContent=from;m.append(b,document.createTextNode(txt));$('chatMessages').append(m);$('chatMessages').scrollTop=100000;while($('chatMessages').children.length>30)$('chatMessages').firstChild.remove();}
 function systemMessage(t){const d=document.createElement('div');d.className='message system';d.textContent='✦ '+t;$('chatMessages').append(d);$('chatMessages').scrollTop=100000;}
 function openDrawer(which){closeQuickStations();document.querySelector('.quest-panel').classList.remove('mobile-open');$('cameraController').classList.remove('is-open');$('chatPanel').classList.remove('chat-visible');state.stick.x=0;state.stick.y=0;resetStick();$('shade').classList.remove('hidden');$('lessonDrawer').classList.toggle('hidden',which!=='lesson');$('profileDrawer').classList.toggle('hidden',which!=='profile');$('helpDrawer').classList.toggle('hidden',which!=='help');state.keys.clear();}
 function closeDrawer(){$('lessonDrawer').classList.remove('show-quiz');$('shade').classList.add('hidden');for(const id of ['lessonDrawer','profileDrawer','helpDrawer'])$(id).classList.add('hidden');state.station=null;}

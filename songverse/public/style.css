@@ -184,3 +184,132 @@
  .top-actions{margin-left:auto}
 }
 @media(max-width:340px){.top-actions .roundbtn{width:25px!important;min-width:25px!important}.top-actions .xp{font-size:9px!important;padding:0 2px}}
+
+
+/* ===== SóngVerse V7: Mobile-first immersive classroom / PWA ===== */
+:root{--game-viewport-height:100dvh;--v7-top:52px;--v7-pink:#e77ea8;--v7-blue:#4f66ce}
+html,body{width:100%;height:var(--game-viewport-height,100dvh);overflow:hidden;-webkit-text-size-adjust:100%;overscroll-behavior:none}
+#world{height:var(--game-viewport-height,100dvh)}
+#gameUI{height:var(--game-viewport-height,100dvh)}
+#gameUI .station-hotspots{position:fixed;inset:0;pointer-events:none;z-index:7}
+.station-hotspot{position:absolute;display:none;align-items:center;gap:7px;padding:7px 9px;transform:translate(-50%,-50%);max-width:192px;min-width:125px;border:1px solid #ffffffc9;border-radius:12px;background:linear-gradient(130deg,#fffffff8,#edf6fff5);color:#293d69;box-shadow:0 7px 20px #2334525c;backdrop-filter:blur(10px);font-family:inherit;pointer-events:auto;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.station-hotspot .hotspot-emoji{display:grid;place-items:center;width:28px;min-width:28px;height:28px;background:#e7edff;border-radius:9px;font-size:17px}
+.station-hotspot .hotspot-title{font-size:11px;font-weight:900;line-height:1.1;text-align:left;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.station-hotspot .hotspot-action{font-size:8px;font-weight:900;color:#596fd4;border-radius:7px;padding:4px;background:#dfe8ff;white-space:nowrap}
+.station-hotspot.is-near{border-color:#ffdc7c;box-shadow:0 7px 21px #3c4c6990,0 0 0 3px #ffe39b88}
+.quick-stations{display:none}
+.lesson-heading-title{min-width:0;flex:1}
+.lesson-heading-title h2{overflow:hidden;text-overflow:ellipsis}
+.lesson-top-actions{display:flex;gap:7px;align-items:center;flex-shrink:0}
+.lesson-nav-btn{border:1px solid #d7def6;background:#f0f3ff;color:#5d6ab4;border-radius:10px;padding:9px 11px;min-height:42px;font-weight:900;font-size:11px}
+.lesson-nav-btn.primary{color:white;background:#6670d7;border-color:#6670d7}
+.lesson-nav-btn:active{transform:scale(.98)}
+.fullscreen-help{position:fixed;inset:0;z-index:105;background:#1d2d4cbd;display:grid;place-items:center;padding:18px;overflow:auto}
+.fullscreen-help>div{width:min(430px,100%);max-height:calc(100dvh - 30px);overflow:auto;padding:23px;border-radius:19px;background:#fff;color:#304466;text-align:center;box-shadow:0 20px 55px #0005}
+.fullscreen-help span{font-size:40px}
+.fullscreen-help h3{margin:7px 0}
+.fullscreen-help p{font-size:14px;line-height:1.65}
+.fullscreen-help button{background:#5f6fcb;border:0;border-radius:12px;padding:13px 20px;font-weight:900;color:#fff}
+@media (max-width:1100px), (hover:none) and (pointer:coarse) {
+ :root{--v7-top:49px}
+ #world{inset:0;width:100%;height:var(--game-viewport-height,100dvh)!important;touch-action:none}
+ #gameUI{inset:0!important;height:var(--game-viewport-height,100dvh)!important}
+ .topbar{top:calc(env(safe-area-inset-top,0px) + 3px)!important;left:calc(env(safe-area-inset-left,0px) + 7px)!important;right:calc(env(safe-area-inset-right,0px) + 7px)!important;max-width:none!important;gap:4px!important}
+ .brand{padding:4px 7px!important;box-shadow:0 4px 14px #172e505c!important;background:#ffffffeb}
+ .brandmark{width:26px!important;height:26px!important}
+ .brand b{font-size:13px!important}
+ .top-actions{gap:1px!important;padding:3px!important}
+ .top-actions .xp{font-size:10px!important;padding:2px 4px!important}
+ .top-actions .roundbtn{width:35px!important;min-width:35px!important;height:35px!important;font-size:19px!important}
+ #fullscreenBtn{color:#4b64c5;font-size:23px!important}
+ .mobile-hud{bottom:calc(env(safe-area-inset-bottom,0px) + 6px)!important;left:calc(env(safe-area-inset-left,0px) + 5px)!important;right:calc(env(safe-area-inset-right,0px) + 5px)!important;z-index:11!important;align-items:end!important}
+ .mobile-actions{gap:6px!important}
+ #mobileInteract{display:block!important;max-width:min(212px,40vw)!important;min-width:136px!important;min-height:48px!important;padding:8px 10px!important;font-size:12px!important;font-weight:900!important;background:#5e68d3!important;color:white!important;box-shadow:0 8px 19px #26386080!important;border:1px solid #a8b1fc!important;border-radius:14px!important}
+ #mobileMapBtn{display:block!important;min-width:126px!important;min-height:40px!important;padding:7px 10px!important;font-size:11px!important;border-radius:12px!important}
+ .joystick-base{width:clamp(83px,22vmin,110px)!important;height:clamp(83px,22vmin,110px)!important}
+ .joystick-stick{width:46px!important;height:46px!important}
+ .quick-stations.is-open{display:block!important}
+ .quick-stations{position:fixed;z-index:16;pointer-events:auto!important;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 15px);transform:translateX(-50%);width:min(610px,calc(100vw - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px) - 20px));max-height:min(77dvh,510px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;border-radius:18px;padding:12px 13px;background:linear-gradient(135deg,#fffffff5,#eff5fff8);border:1px solid #ffffffee;box-shadow:0 12px 45px #10274699;backdrop-filter:blur(16px)}
+ .quick-stations-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #e2e9f7;padding:2px 3px 10px;margin-bottom:8px}
+ .quick-stations-head small{font-size:9px;letter-spacing:1.4px;color:#6d7eae;font-weight:900}
+ .quick-stations-head h3{margin:4px 0 0;font-size:16px;line-height:1.2;color:#2a416e}
+ #quickStationsClose{width:38px;height:38px;border-radius:11px;background:#e7edff;border:0;color:#435798;flex-shrink:0;font-size:19px}
+ .quick-stations-list{display:grid;gap:6px}
+ .quick-station-row{display:flex;align-items:center;gap:7px;border:1px solid #e5ebf7;border-radius:12px;background:white;padding:8px}
+ .quick-station-info{flex:1;min-width:0;display:grid;gap:3px}
+ .quick-station-info b{font-size:12px;color:#344c76;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .quick-station-info small{font-size:10px;color:#8190a8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .quick-station-row button{border-radius:10px;min-height:41px;min-width:65px;padding:7px 10px;font-size:11px;font-weight:900;border:0;flex-shrink:0}
+ .quick-station-row .quick-learn{background:#5b6fd4;color:white}
+ .quick-station-row .quick-travel{background:#eaf1ff;color:#4d64a9}
+ .quick-stations>p{font-size:10px;color:#71819a;margin:9px 3px 2px}
+ .station-hotspot{min-height:37px;min-width:120px;max-width:min(192px,38vw)!important;display:none}
+ .station-hotspot .hotspot-emoji{min-width:25px;width:25px;height:25px}
+ .station-hotspot .hotspot-title{font-size:11px}
+ .station-hotspot .hotspot-action{font-size:8px;padding:4px 5px}
+ .station-hotspot:active{transform:translate(-50%,-50%) scale(.96)}
+ .lesson-top-actions{gap:4px}
+ #lessonDrawer{left:0!important;right:0!important;top:0!important;bottom:0!important;width:100%!important;height:var(--game-viewport-height,100dvh)!important;max-height:var(--game-viewport-height,100dvh)!important;border-radius:0!important;z-index:30!important;pointer-events:auto!important;box-shadow:none!important;background:linear-gradient(160deg,#f5f8ff,#fff)}
+ #lessonDrawer .drawer-heading{flex:0 0 auto;min-height:62px;padding:calc(env(safe-area-inset-top,0px) + 7px) calc(env(safe-area-inset-right,0px) + 12px) 8px calc(env(safe-area-inset-left,0px) + 14px)!important;background:linear-gradient(105deg,#f7f9ff,#ebf5ff);gap:9px}
+ #lessonDrawer .drawer-heading h2{font-size:clamp(14px,3.3vw,21px)!important;line-height:1.2;margin:3px 0 0;max-width:100%}
+ #lessonDrawer .drawer-heading .eyebrow{font-size:9px}
+ #lessonDrawer .closebtn{width:39px!important;height:40px!important;min-width:39px;min-height:40px;font-weight:900;font-size:20px;background:#edf1fa;border-radius:10px}
+ #lessonDrawer .lesson-nav-btn{padding:7px 11px!important;min-height:40px;font-size:11px}
+ #lessonDrawer .drawer-scroll{min-height:0;flex:1!important;overflow:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:12px max(14px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 20px) max(14px,env(safe-area-inset-left,0px))!important}
+ #lessonDrawer .lab-canvas{height:clamp(110px,25dvh,210px)!important}
+ #lessonDrawer .quiz-area{margin-top:10px!important}
+ #lessonDrawer .quiz-block{background:white;border:1px solid #e5eaf5;border-radius:13px;padding:12px;margin:10px 0!important;box-shadow:0 3px 13px #213e5410}
+ #lessonDrawer .quiz-block h4{font-size:13px!important;line-height:1.35;margin:2px 0 9px}
+ #lessonDrawer .choices{display:grid;grid-template-columns:1fr;gap:6px}
+ #lessonDrawer .choices button{min-height:44px;font-size:13px!important;line-height:1.32;padding:10px 12px!important;border-radius:10px;touch-action:manipulation}
+ #lessonDrawer .choices button:active{background:#e6ebff;transform:scale(.992)}
+ #lessonDrawer .answer-detail{font-size:12px;padding:10px}
+ #lessonDrawer .control input[type=range]{min-height:29px;touch-action:pan-x}
+ #lessonDrawer .lesson-intro{font-size:12px!important;line-height:1.5}
+ #lessonDrawer .learning-path{font-size:10px;gap:5px;flex-wrap:wrap}
+ #lessonDrawer .reflection-card textarea{font-size:16px}
+ #lessonDrawer.show-quiz .quiz-area{border-color:#8797f6;box-shadow:0 0 0 2px #6478ed29}
+ .fullscreen-help{pointer-events:auto!important}
+}
+@media (max-width:1100px) and (orientation:landscape), (hover:none) and (pointer:coarse) and (orientation:landscape) {
+ #gameUI,#world{height:var(--game-viewport-height,100dvh)!important}
+ #lessonDrawer .drawer-heading{min-height:53px;padding-top:calc(env(safe-area-inset-top,0px) + 4px)!important;padding-bottom:5px!important}
+ #lessonDrawer .drawer-heading h2{font-size:clamp(14px,2vw,19px)!important}
+ #lessonDrawer .lesson-nav-btn{min-height:36px;padding:5px 10px!important}
+ #lessonDrawer .drawer-scroll{display:grid!important;grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);grid-template-areas:"intro quiz" "path quiz" "demo quiz" "explain quiz" "notes quiz";gap:9px 14px;align-content:start;align-items:start;overflow-y:auto!important}
+ #lessonDrawer .lesson-intro{grid-area:intro}
+ #lessonDrawer .learning-path{grid-area:path}
+ #lessonDrawer #lessonDemo{grid-area:demo;min-width:0}
+ #lessonDrawer #lessonExplain{grid-area:explain;min-width:0}
+ #lessonDrawer .reflection-card{grid-area:notes;min-width:0}
+ #lessonDrawer #quizArea{grid-area:quiz;position:sticky;top:0;align-self:start;margin:0!important;max-height:calc(var(--game-viewport-height,100dvh) - 72px - env(safe-area-inset-bottom,0px));overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain;border:1px solid #e6e9f7;border-radius:14px;padding:11px;background:#fafbff}
+ #lessonDrawer #lessonDemo .lab-card{margin:0!important;padding:10px!important}
+ #lessonDrawer .lab-canvas{height:clamp(103px,31dvh,175px)!important}
+ #lessonDrawer .control{margin:7px 0;font-size:11px}
+ #lessonDrawer .control input[type=range]{min-height:24px}
+ #lessonDrawer .lesson-intro{margin:0}
+ #lessonDrawer .learning-path{display:none}
+ #lessonDrawer .quiz-block{padding:10px;margin:6px 0!important}
+ #lessonDrawer .choices button{min-height:42px;padding:8px 10px!important}
+ .quick-stations{max-height:calc(var(--game-viewport-height,100dvh) - 45px)!important}
+ .quick-stations-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .quick-station-row{flex-wrap:wrap}
+ .quick-station-info{width:100%;flex-basis:100%}
+ .quick-station-row button{flex:1;min-width:0}
+ #mobileInteract{min-height:44px!important}
+ .mobile-hud .joystick-base{width:clamp(74px,24dvh,98px)!important;height:clamp(74px,24dvh,98px)!important}
+}
+@media (max-width:600px) and (orientation:portrait) {
+ .topbar .brand b{font-size:13px!important}
+ .topbar #profileBtn{display:none!important}
+ #lessonDrawer .lesson-nav-btn{font-size:10px;padding:8px 7px!important}
+ .lesson-heading-title h2{max-width:200px}
+ #lessonDrawer .drawer-scroll{display:block!important}
+ .quick-stations{max-height:68dvh}
+ .quick-station-info small{font-size:9px}
+}
+@media (max-width:360px){
+ .topbar .top-actions .xp{display:none!important}
+ .topbar .top-actions .roundbtn{min-width:31px!important;width:31px!important}
+ .quick-station-row button{min-width:57px;padding:7px 5px;font-size:10px}
+}

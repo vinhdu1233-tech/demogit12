@@ -25,11 +25,12 @@
  </aside>
  <div class="world-title"><span>🌈 WAVE CAMPUS</span><strong>34 trạm tương tác · 6 thế giới sóng</strong><small id="nearHint">Khám phá cùng bạn bè!</small></div>
  <aside class="chat-panel" id="chatPanel">
-  <div class="chat-header"><div><b>💬 Bạn cùng lớp</b><span id="chatOnline">Đang kết nối...</span></div><button id="toggleChat" class="mini-btn">−</button></div>
+  <div class="chat-header"><div><b>💬 Bạn cùng lớp</b><span id="chatOnline">Đang kết nối...</span></div><button id="toggleChat" class="mini-btn" type="button" aria-label="Đóng cửa sổ chat">✕</button></div>
   <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
-  <form id="chatForm" class="chat-form"><input id="chatInput" autocomplete="off" maxlength="120" placeholder="Gửi lời chào..."/><button title="Gửi" type="submit">➤</button></form>
+  <form id="chatForm" class="chat-form"><input id="chatInput" autocomplete="off" maxlength="120" placeholder="Nhắn tin cho các bạn trong lớp…" aria-label="Nội dung tin nhắn" enterkeyhint="send"/><button title="Gửi tin nhắn" aria-label="Gửi tin nhắn" type="submit">➤</button></form>
  </aside>
  <div id="actionHint" class="action-hint hidden">Nhấn <kbd>E</kbd> để mở trạm</div>
+ <button id="mobileChatFab" class="mobile-chat-fab touch-only" type="button" aria-controls="chatPanel" aria-expanded="false" aria-label="Mở chat lớp học"><span class="mobile-chat-fab-icon">💬</span><span class="mobile-chat-fab-text">CHAT LỚP<small id="mobileChatStatus">Nhắn với bạn bè</small></span><span id="mobileChatUnread" class="mobile-chat-unread hidden" aria-label="Tin nhắn chưa đọc">0</span></button>
  <section class="mobile-hud" aria-label="Điều khiển trên điện thoại">
   <div class="joystick-zone" id="joystickZone" role="group" aria-label="Cần điều khiển di chuyển">
    <div class="joystick-base"><div class="joystick-stick" id="joystickStick"></div></div>

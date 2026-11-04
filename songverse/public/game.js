@@ -80,6 +80,8 @@ function initUI(){if(uiInit)return;uiInit=true;
  const cameraToggle=$('mobileCameraBtn');if(cameraToggle)cameraToggle.addEventListener('click',()=>{$('cameraController').classList.toggle('is-open');cameraToggle.setAttribute('aria-expanded',String($('cameraController').classList.contains('is-open')))});
  const chatOpen=$('chatOpenBtn');if(chatOpen)chatOpen.addEventListener('click',()=>{$('chatPanel').classList.toggle('chat-visible');$('chatPanel').classList.remove('collapsed');chatOpen.setAttribute('aria-expanded',String($('chatPanel').classList.contains('chat-visible')))});
  $('logoutBtn').addEventListener('click',()=>{state.ws?.close();state.ws=null;state.token='';localStorage.removeItem('sv_token');state.others.clear();showAuth();});
+ $('mobileHelpBtn')?.addEventListener('click',()=>{$('helpBtn').click()});
+ $('mobileLogoutBtn')?.addEventListener('click',()=>{$('logoutBtn').click()});
  $('shade').addEventListener('click',closeDrawer);document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeDrawer));
  $('toggleChat').addEventListener('click',()=>{if(isTouchUI()){$('chatPanel').classList.remove('chat-visible');$('chatOpenBtn')?.setAttribute('aria-expanded','false')}else{$('chatPanel').classList.toggle('collapsed');$('toggleChat').textContent=$('chatPanel').classList.contains('collapsed')?'+':'−'}});
  $('chatForm').addEventListener('submit',e=>{e.preventDefault();const text=$('chatInput').value.trim();if(text){if(state.ws?.readyState===1)state.ws.send(JSON.stringify({type:'chat',message:text}));else toast('Chưa kết nối phòng chung.');$('chatInput').value='';}});

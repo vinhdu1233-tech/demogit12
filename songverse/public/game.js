@@ -78,7 +78,7 @@ function initUI(){if(uiInit)return;uiInit=true;
  setupCameraControls();
  setupMusic();
  const cameraToggle=$('mobileCameraBtn');if(cameraToggle)cameraToggle.addEventListener('click',()=>{$('cameraController').classList.toggle('is-open');cameraToggle.setAttribute('aria-expanded',String($('cameraController').classList.contains('is-open')))});
- const chatOpen=$('chatOpenBtn');if(chatOpen)chatOpen.addEventListener('click',()=>{$('chatPanel').classList.toggle('chat-visible');$('chatPanel').classList.remove('collapsed');chatOpen.setAttribute('aria-expanded',String($('chatPanel').classList.contains('chat-visible')))});
+ const chatOpen=$('chatOpenBtn');if(chatOpen)chatOpen.addEventListener('click',()=>{$('cameraController').classList.remove('is-open');document.querySelector('.quest-panel').classList.remove('mobile-open');$('chatPanel').classList.toggle('chat-visible');$('chatPanel').classList.remove('collapsed');chatOpen.setAttribute('aria-expanded',String($('chatPanel').classList.contains('chat-visible')))});
  $('logoutBtn').addEventListener('click',()=>{state.ws?.close();state.ws=null;state.token='';localStorage.removeItem('sv_token');state.others.clear();showAuth();});
  $('mobileHelpBtn')?.addEventListener('click',()=>{$('helpBtn').click()});
  $('mobileLogoutBtn')?.addEventListener('click',()=>{$('logoutBtn').click()});

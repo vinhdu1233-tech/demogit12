@@ -1,8 +1,10 @@
 'use strict';
 import { movementFromView, rotateXZ, orbitBy, cameraEye, orbitByKey, facingFromMovement } from './controls.js';
+import {chapterZones,addedStations} from './chapter2.js';
+import {labConfigV6,drawChapterLab} from './lab-v6.js';
 const $=id=>document.getElementById(id);
 const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
-const state={token:localStorage.getItem('sv_token')||'',user:null,room:localStorage.getItem('sv_room')||'11A1-SONG',ws:null,others:new Map(),x:0,z:0,rotation:0,keys:new Set(),camAngle:0.65,camPitch:0.08,camDistance:9,t:0,station:null,near:null,authMode:'register',avatar:null,lab:{f:2,v:4,A:.52,d:0.5,soundFrequency:500,timbre:1,distance:5,power:10,decibel:50},lastMove:0,isWalking:false,gl:null,notice:null,drag:false,dragX:0,dragY:0,connection:'offline',stick:{x:0,y:0,pointer:null},reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches};
+const state={token:localStorage.getItem('sv_token')||'',user:null,room:localStorage.getItem('sv_room')||'11A1-SONG',ws:null,others:new Map(),x:0,z:0,rotation:0,keys:new Set(),camAngle:0.65,camPitch:0.08,camDistance:9,t:0,station:null,near:null,authMode:'register',avatar:null,lab:{f:2,v:4,A:.52,d:0.5,soundFrequency:500,timbre:1,distance:5,power:10,decibel:50,wavelengthNm:550,slitGap:.6,screenDistance:1.5,sourceSpacing:7,waveLength:5,phaseMode:0,harmonic:2,boundary:0,speedRatio:1,aperture:1.1,soundSpeed:340,vacuum:1,spectrum:3},lastMove:0,isWalking:false,gl:null,notice:null,drag:false,dragX:0,dragY:0,connection:'offline',stick:{x:0,y:0,pointer:null},reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches};
 const stations=[
 {id:'intro',x:0,z:-11,emoji:'🌊',name:'Bản chất của sóng',label:'BẢN CHẤT SÓNG',intro:'Hãy nhìn gợn sóng lan ra trên hồ. Điều đang lan truyền là trạng thái dao động và năng lượng, chứ không phải mọi giọt nước cùng chạy theo ngọn sóng.',explain:'Theo trang 3: Sóng là sự lan truyền dao động trong không gian theo thời gian. Sóng cơ cần môi trường vật chất đàn hồi; phần tử môi trường chỉ dao động quanh vị trí cân bằng. Đừng nhầm tốc độ truyền sóng với tốc độ của phần tử!',quiz:[['intro-1','Bản chất của sóng cơ là gì?',['Sự di chuyển toàn bộ vật chất','Sự lan truyền dao động trong môi trường','Mọi phần tử đứng yên'],1,'Sóng cơ truyền dao động và năng lượng; vật chất không đi theo toàn bộ sóng.'],['intro-2','Khi sóng lan truyền trên dây, phát biểu nào đúng?',['Mọi phần tử chuyển từ đầu dây đến cuối dây','Tốc độ phần tử luôn bằng tốc độ truyền sóng','Dao động và năng lượng được truyền đi'],2,'Các phần tử dây dao động quanh vị trí cân bằng, còn nhiễu loạn truyền sang phần tử kế tiếp.']]},
 {id:'ngang',x:-14,z:-7,emoji:'🎀',name:'Sóng ngang',label:'SÓNG NGANG',intro:'Quan sát sợi dây: ngọn sóng đi theo phương ngang trong khi các phần tử của dây nhô lên và hạ xuống.',explain:'Theo trang 3: phương dao động vuông góc với phương truyền sóng. Hãy bật/tắt “dấu vị trí cân bằng” để thấy mỗi phần tử chỉ rung lên xuống tại vị trí riêng của nó.',quiz:[['ngang-1','Trong sóng ngang, phương dao động so với phương truyền sóng là...',['Song song','Vuông góc','Trùng nhau'],1,'Sóng ngang được định nghĩa bằng hai phương vuông góc.'],['ngang-2','Ví dụ đặc trưng cho sóng ngang là...',['Sóng âm trong khí','Sóng trên dây căng được rung vuông góc','Sóng nén dọc theo lò xo'],1,'Rung dây lên xuống tạo sóng truyền dọc dây: dao động vuông góc phương truyền.']]},
@@ -16,6 +18,22 @@ const stations=[
 ,{id:'amcuongdo',x:-21,z:3,emoji:'📡',name:'Cường độ & khoảng cách',label:'CƯỜNG ĐỘ ÂM',intro:'Đi xa loa: cùng công suất, năng lượng lan trên diện tích mặt cầu lớn hơn. Kéo khoảng cách để xem cường độ giảm.',explain:'Trang 33–35: với nguồn điểm phát đều theo mọi hướng, không hấp thụ, I = P/(4πR²). Vì thế R tăng gấp 2 thì I giảm 4 lần. Theo mô hình trong tài liệu, I tỉ lệ với A² khi các điều kiện khác giống nhau. Hai công thức chỉ đúng trong giả thiết tương ứng.',quiz:[['amcuongdo-1','Ở xa nguồn âm điểm gấp 2 lần, cùng P và không hấp thụ, cường độ âm...',['Tăng 4 lần','Giảm 2 lần','Giảm 4 lần'],2,'I = P/(4πR²), nên khi R gấp 2 thì mẫu số gấp 4 (trang 33–35).'],['amcuongdo-2','Nếu biên độ sóng tăng gấp đôi (điều kiện khác không đổi), cường độ...',['Tăng 4 lần','Tăng 2 lần','Không đổi'],0,'Vì I ∝ A² nên I₂/I₁=(A₂/A₁)²=4 (trang 33–34).']]}
 ,{id:'amdecibel',x:21,z:3,emoji:'📊',name:'Mức cường độ âm (dB)',label:'DECIBEL',intro:'Thay mức L tính bằng dB rồi quan sát tỉ số I/I₀. Học cách đọc thang logarit: tăng 10 dB nghĩa là cường độ gấp 10 lần.',explain:'Trang 33: L(dB)=10 log₁₀(I/I₀). Suy ra I/I₀=10^(L/10). Ví dụ tăng từ 40 dB lên 50 dB thì tỉ số cường độ bằng 10; điều đó KHÔNG có nghĩa tai cảm giác to hơn đúng 10 lần. Khi minh họa dùng I₀=10⁻¹² W/m², là giá trị chuẩn thường dùng trong bài tập.',quiz:[['amdecibel-1','Khi mức cường độ âm tăng 10 dB, cường độ I tăng...',['10 lần','2 lần','100 lần'],0,'ΔL = 10 log₁₀(I₂/I₁)=10 ⇒ I₂/I₁=10 (trang 33).'],['amdecibel-2','Đại lượng mức cường độ âm L(dB) dùng hàm gì?',['Hàm logarit cơ số 10','Hàm căn bậc hai','Hàm sin'],0,'Công thức L=10 log₁₀(I/I₀) ở trang 33.']]}
 ];
+// Physics 11 full Chapter 2: extend the original 11 stations to 34.
+stations.forEach((s,i)=>{s.chapter=i<6?1:2});
+stations.push(...addedStations);
+const stationGroups=chapterZones.map(z=>({...z,stations:stations.filter(s=>s.chapter===z.number)}));
+for(const g of stationGroups){
+ const n=g.stations.length;
+ g.stations.forEach((s,i)=>{
+  // Dedicated campus zones, curved walking paths and clear spacing.
+  const theta=2*Math.PI*i/n-Math.PI/2;
+  const radius=n>=8?15:12;
+  s.x=g.x+Math.cos(theta)*radius;
+  s.z=g.z+Math.sin(theta)*radius;
+ });
+}
+const WORLD_BOUNDS={minX:-58,maxX:58,minZ:-50,maxZ:91};
+const isTouchUI=()=>matchMedia('(hover:none) and (pointer:coarse), (max-width:1100px)').matches;
 const TOTAL_QUESTIONS=stations.reduce((sum,station)=>sum+station.quiz.length,0);
 const optionSets={skin:['#F9DCC4','#F6C6A8','#CE8D68','#976342','#6E4436'],hair:['#3D2B30','#6E4830','#F4C45E','#A25965','#554AB4','#222938'],outfit:['#5966D8','#EF7199','#39A99B','#EB9A48','#9B70CC','#355A8A'],style:['bob','spiky','bun','short'],accessory:['none','cat','star','glasses']};
 const avatarLabels={style:{bob:'Tóc bob',spiky:'Tóc nhọn',bun:'Búi tóc',short:'Tóc ngắn'},accessory:{none:'Không',cat:'Tai mèo',star:'Ngôi sao',glasses:'Mắt kính'}};
@@ -27,10 +45,30 @@ function loginReady(data){state.token=data.token;state.user=data.user;state.avat
 async function startGame(){
  $('authOverlay').classList.add('hidden');$('gameUI').classList.remove('hidden');$('roomName').textContent=state.room;updateProgress();initUI();if(!state.gl)init3D();connectWs();
  fetch('/api/health').then(r=>r.json()).then(cfg=>{if(cfg.chatEnabled===false){$('chatPanel').classList.add('hidden');toast('Phòng học đang tắt trò chuyện để tập trung học tập')}}).catch(()=>{});
- if(matchMedia('(max-width: 700px)').matches)$('chatPanel').classList.add('collapsed');toast('Chào mừng '+state.user.nickname+'! Hãy dự đoán, thí nghiệm và giải thích 🌊');
+ if(isTouchUI()){$('chatPanel').classList.add('collapsed');$('chatPanel').classList.remove('chat-visible');};toast('Chào mừng '+state.user.nickname+'! Hãy dự đoán, thí nghiệm và giải thích 🌊');
 }
-function updateProgress(){const c=state.user?.cleared?.length||0;$('xp').textContent='✦ '+(c*100)+' XP';$('progressFill').style.width=(100*c/TOTAL_QUESTIONS)+'%';$('progressText').textContent=c+'/'+TOTAL_QUESTIONS+' câu hoàn thành';$('badgeLabel').textContent=c===TOTAL_QUESTIONS?'🏆 Bậc thầy sóng':c>=14?'🌟 Nhà khoa học':c>=6?'🔎 Nhà khám phá':'Tân binh sóng';if($('profileScore'))$('profileScore').textContent=(c*100)+' XP đã đạt';updateStationLinks()}
-function updateStationLinks(){const panel=$('stationLinks');panel.replaceChildren();for(const s of stations){const button=document.createElement('button');button.className='station-link';button.type='button';const n=s.quiz.filter(q=>state.user?.cleared.includes(q[0])).length;button.innerHTML=`<span class="symbol">${s.emoji}</span><span><b>${s.name}</b><small>${n}/${s.quiz.length} thử thách</small></span><span class="done">${n===s.quiz.length?'✓':''}</span>`;button.addEventListener('click',()=>{openLesson(s.id);document.querySelector('.quest-panel').classList.remove('mobile-open')});panel.append(button);}}
+function updateProgress(){const c=(state.user?.cleared||[]).filter(id=>stations.some(s=>s.quiz.some(q=>q[0]===id))).length;$('xp').textContent='✦ '+(c*100)+' XP';$('progressFill').style.width=(100*c/TOTAL_QUESTIONS)+'%';$('progressText').textContent=c+'/'+TOTAL_QUESTIONS+' câu hoàn thành';$('badgeLabel').textContent=c===TOTAL_QUESTIONS?'🏆 Bậc thầy sóng':c>=Math.ceil(TOTAL_QUESTIONS*.65)?'🌟 Nhà khoa học':c>=Math.ceil(TOTAL_QUESTIONS*.25)?'🔎 Nhà khám phá':'Tân binh sóng';if($('profileScore'))$('profileScore').textContent=(c*100)+' XP đã đạt';updateStationLinks()}
+function updateStationLinks(){
+ const panel=$('stationLinks');panel.replaceChildren();
+ for(const g of stationGroups){
+  const head=document.createElement('div');head.className='chapter-heading';
+  head.textContent=g.emoji+' BÀI '+g.number+' · '+g.name+' ('+g.stations.length+' trạm)';panel.append(head);
+  for(const s of g.stations){
+   const row=document.createElement('div');row.className='station-row';
+   const button=document.createElement('button');button.className='station-link';button.type='button';
+   const n=s.quiz.filter(q=>(state.user?.cleared||[]).includes(q[0])).length;
+   const symbol=document.createElement('span');symbol.className='symbol';symbol.textContent=s.emoji;
+   const desc=document.createElement('span');const bold=document.createElement('b');bold.textContent=s.name;
+   const small=document.createElement('small');small.textContent=n+'/'+s.quiz.length+' thử thách';desc.append(bold,small);
+   const done=document.createElement('span');done.className='done';done.textContent=n===s.quiz.length?'✓':'';
+   button.append(symbol,desc,done);
+   button.addEventListener('click',()=>{document.querySelector('.quest-panel').classList.remove('mobile-open');openLesson(s.id)});
+   const travel=document.createElement('button');travel.className='travel-btn';travel.type='button';travel.title='Dịch chuyển tới trạm '+s.name;travel.textContent='📍';travel.setAttribute('aria-label','Đi tới trạm '+s.name);
+   travel.addEventListener('click',()=>{state.x=s.x;state.z=s.z+3.7;state.keys.clear();document.querySelector('.quest-panel').classList.remove('mobile-open');state.ws?.readyState===1&&state.ws.send(JSON.stringify({type:'move',x:state.x,z:state.z,rot:state.rotation}));toast('Đã đến '+s.name+' · nhấn Khám phá để học!')});
+   row.append(button,travel);panel.append(row);
+  }
+ }
+}
 let uiInit=false;
 function initUI(){if(uiInit)return;uiInit=true;
  document.querySelectorAll('.auth-tabs button').forEach(b=>b.addEventListener('click',()=>setAuthMode(b.dataset.mode)));
@@ -39,9 +77,11 @@ function initUI(){if(uiInit)return;uiInit=true;
  $('cameraResetBtn').addEventListener('click',resetCamera);
  setupCameraControls();
  setupMusic();
+ const cameraToggle=$('mobileCameraBtn');if(cameraToggle)cameraToggle.addEventListener('click',()=>{$('cameraController').classList.toggle('is-open');cameraToggle.setAttribute('aria-expanded',String($('cameraController').classList.contains('is-open')))});
+ const chatOpen=$('chatOpenBtn');if(chatOpen)chatOpen.addEventListener('click',()=>{$('chatPanel').classList.toggle('chat-visible');$('chatPanel').classList.remove('collapsed');chatOpen.setAttribute('aria-expanded',String($('chatPanel').classList.contains('chat-visible')))});
  $('logoutBtn').addEventListener('click',()=>{state.ws?.close();state.ws=null;state.token='';localStorage.removeItem('sv_token');state.others.clear();showAuth();});
  $('shade').addEventListener('click',closeDrawer);document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeDrawer));
- $('toggleChat').addEventListener('click',()=>{$('chatPanel').classList.toggle('collapsed');$('toggleChat').textContent=$('chatPanel').classList.contains('collapsed')?'+':'−'});
+ $('toggleChat').addEventListener('click',()=>{if(isTouchUI()){$('chatPanel').classList.remove('chat-visible');$('chatOpenBtn')?.setAttribute('aria-expanded','false')}else{$('chatPanel').classList.toggle('collapsed');$('toggleChat').textContent=$('chatPanel').classList.contains('collapsed')?'+':'−'}});
  $('chatForm').addEventListener('submit',e=>{e.preventDefault();const text=$('chatInput').value.trim();if(text){if(state.ws?.readyState===1)state.ws.send(JSON.stringify({type:'chat',message:text}));else toast('Chưa kết nối phòng chung.');$('chatInput').value='';}});
  $('saveProfile').addEventListener('click',async()=>{try{const d=await api('profile',{nickname:$('editNickname').value,avatar:state.avatar});state.user=d.user;updateProgress();closeDrawer();toast('Đã lưu nhân vật chibi! 🎨')}catch(e){toast(e.message)}});
  // Use physical keyboard codes: movement stays predictable across input languages.
@@ -61,7 +101,7 @@ function initUI(){if(uiInit)return;uiInit=true;
  window.addEventListener('blur',()=>{state.keys.clear();state.isWalking=false;});
  document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;const map={up:'w',down:'s',left:'a',right:'d'};const down=e=>{e.preventDefault();state.keys.add(map[k]);b.setPointerCapture(e.pointerId)};b.addEventListener('pointerdown',down);b.addEventListener('pointerup',()=>state.keys.delete(map[k]));b.addEventListener('pointercancel',()=>state.keys.delete(map[k]));});
  $('mobileInteract').addEventListener('click',()=>{if(state.near)openLesson(state.near.id);else toast('Đi gần một trạm học hoặc bấm vào danh sách trạm nhé!')});
- $('mobileMapBtn').addEventListener('click',()=>document.querySelector('.quest-panel').classList.toggle('mobile-open'));
+ $('mobileMapBtn').addEventListener('click',()=>{$('cameraController').classList.remove('is-open');$('chatPanel').classList.remove('chat-visible');document.querySelector('.quest-panel').classList.toggle('mobile-open')});
  $('closeMapBtn').addEventListener('click',()=>document.querySelector('.quest-panel').classList.remove('mobile-open'));
  $('saveReflection').addEventListener('click',saveReflection);
  setupJoystick();
@@ -146,13 +186,13 @@ function connectWs(){if(state.ws)state.ws.close();state.others.clear();const url
 function countPlayers(){$('playerCount').textContent=1+state.others.size;}
 function message(from,txt){const m=document.createElement('div');m.className='message';const b=document.createElement('b');b.textContent=from;m.append(b,document.createTextNode(txt));$('chatMessages').append(m);$('chatMessages').scrollTop=100000;while($('chatMessages').children.length>30)$('chatMessages').firstChild.remove();}
 function systemMessage(t){const d=document.createElement('div');d.className='message system';d.textContent='✦ '+t;$('chatMessages').append(d);$('chatMessages').scrollTop=100000;}
-function openDrawer(which){state.stick.x=0;state.stick.y=0;resetStick();$('shade').classList.remove('hidden');$('lessonDrawer').classList.toggle('hidden',which!=='lesson');$('profileDrawer').classList.toggle('hidden',which!=='profile');$('helpDrawer').classList.toggle('hidden',which!=='help');state.keys.clear();}
+function openDrawer(which){document.querySelector('.quest-panel').classList.remove('mobile-open');$('cameraController').classList.remove('is-open');$('chatPanel').classList.remove('chat-visible');state.stick.x=0;state.stick.y=0;resetStick();$('shade').classList.remove('hidden');$('lessonDrawer').classList.toggle('hidden',which!=='lesson');$('profileDrawer').classList.toggle('hidden',which!=='profile');$('helpDrawer').classList.toggle('hidden',which!=='help');state.keys.clear();}
 function closeDrawer(){$('shade').classList.add('hidden');for(const id of ['lessonDrawer','profileDrawer','helpDrawer'])$(id).classList.add('hidden');state.station=null;}
 function isDrawerOpen(){return !$('shade').classList.contains('hidden')}
 function openLesson(id){if(!state.user)return;const s=stations.find(x=>x.id===id);if(!s)return;state.station=s;$('lessonEyebrow').textContent=s.emoji+' TRẠM '+String(stations.indexOf(s)+1).padStart(2,'0');$('lessonTitle').textContent=s.name;$('lessonIntro').textContent=s.intro;$('lessonExplain').textContent=s.explain;buildLab(s);buildQuizzes(s);openDrawer('lesson');loadReflection();}
 function buildLab(s){
  const box=$('lessonDemo');box.replaceChildren();
- if(s.id==='thuthach'){const el=document.createElement('div');el.className='lab-card';el.innerHTML='<h3>🔎 Mẹo đọc đồ thị sóng</h3><p style="font-size:12px">Đỉnh → đáy gần nhất: λ/2. Hai đỉnh liên tiếp: λ. n đỉnh liên tiếp: (n−1)λ. Đừng nhầm cm với m khi tính vận tốc!</p>';box.append(el);return;}
+ 
  const div=document.createElement('div');div.className='lab-card';div.innerHTML='<h3>🧪 Thí nghiệm tương tác</h3><p class="lab-guidance">Bước 1: Dự đoán. Bước 2: kéo thanh tham số. Bước 3: quan sát đồ thị/số liệu và giải thích.</p><canvas id="labCanvas" class="lab-canvas" width="650" height="220"></canvas><div id="labControls"></div><div id="labMetrics" class="lab-metric"></div>';box.append(div);
  const soundConfigs={
   amnguon:[['f','Tần số dao động (mô phỏng)',1,5,.5],['A','Biên độ dao động (mô phỏng)',.15,1.1,.1]],
@@ -161,7 +201,7 @@ function buildLab(s){
   amcuongdo:[['distance','Khoảng cách R (m)',1,20,.5],['power','Công suất P (W)',1,20,1]],
   amdecibel:[['decibel','Mức L (dB)',0,100,5]]
  };
- const config=soundConfigs[s.id]|| (s.id==='pha'?[['d','Khoảng cách d/λ',0,1.5,.25]]:s.id==='intro'?[['f','Tần số (Hz)',.5,5,.5]]:s.id==='ngang'||s.id==='doc'?[['A','Biên độ (đ.v.)',.15,1.1,.1],['f','Tần số (Hz)',.5,5,.5]]:[['f','Tần số (Hz)',.5,5,.5],['v','Tốc độ v (đ.v./s)',1,8,.5]]);
+ const config=soundConfigs[s.id]|| (addedStations.some(x=>x.id===s.id)?labConfigV6(s.id):s.id==='pha'?[['d','Khoảng cách d/λ',0,1.5,.25]]:s.id==='intro'?[['f','Tần số (Hz)',.5,5,.5]]:s.id==='ngang'||s.id==='doc'?[['A','Biên độ (đ.v.)',.15,1.1,.1],['f','Tần số (Hz)',.5,5,.5]]:[['f','Tần số (Hz)',.5,5,.5],['v','Tốc độ v (đ.v./s)',1,8,.5]]);
  for(const [k,label,min,max,step] of config){const row=document.createElement('label');row.className='control';const name=document.createElement('span');name.textContent=label;const out=document.createElement('output');out.textContent=state.lab[k];const inp=document.createElement('input');Object.assign(inp,{type:'range',min,max,step,value:state.lab[k]});inp.addEventListener('input',()=>{state.lab[k]=Number(inp.value);out.textContent=state.lab[k];updateLabMetrics(s)});row.append(name,out,inp);$('labControls').append(row);}
  if(s.id==='amtanso'){const presets=document.createElement('div');presets.className='sound-presets';for(const [hz,label] of [[8,'8 Hz · Hạ âm'],[440,'440 Hz · Nghe được'],[25000,'25 000 Hz · Siêu âm']]){const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',()=>{state.lab.soundFrequency=hz;const range=$('labControls').querySelector('input');if(range){range.value=String(hz);range.parentElement.querySelector('output').textContent=String(hz)}updateLabMetrics(s)});presets.append(b)}div.append(presets)}
  if(['amtanso','amsac'].includes(s.id)){
@@ -173,7 +213,15 @@ function buildLab(s){
 function formatNumber(v){return v.toExponential(2).replace('e+', ' ×10^').replace('e-', ' ×10^-');}
 function updateLabMetrics(s){
  const l=state.lab,lambda=l.v/l.f,m=$('labMetrics');if(!m)return;let metrics;
- if(s.id==='pha')metrics=[['d / λ',l.d.toFixed(2)],['|Δφ|',(2*Math.PI*l.d).toFixed(2)+' rad'],['Trạng thái',Math.abs(l.d-Math.round(l.d))<.01?'Cùng pha':Math.abs(l.d-(Math.floor(l.d)+.5))<.01?'Ngược pha':Math.abs(l.d*2-Math.round(l.d*2))>.4?'Vuông pha':'Lệch pha']];
+ if(addedStations.some(x=>x.id===s.id)){
+  if(s.chapter===5)metrics=[['λ',l.wavelengthNm+' nm'],['i=λD/a',(l.wavelengthNm*1e-3*l.screenDistance/l.slitGap).toFixed(3)+' mm'],['Quan sát','Vân sáng / tối']];
+  else if(s.chapter===4)metrics=[['Hai nguồn',l.sourceSpacing+' đ.v.'],['λ',l.waveLength+' đ.v.'],['Pha nguồn',l.phaseMode?'Ngược pha':'Cùng pha']];
+  else if(s.chapter===6)metrics=[['Mode',String(l.harmonic)],['Biên độ',l.A.toFixed(2)],['Dây',s.id==='dungtudo'?'Cố định – tự do':'Hai đầu cố định']];
+  else if(s.chapter===3)metrics=[['Bước sóng',s.id==='empho'?'Giảm → f tăng':'Sóng ngang'],['Truyền','Được trong chân không'],['Tốc độ c','3×10⁸ m/s']];
+  else if(s.chapter===2)metrics=[['Quãng đường tới–lui',(2*l.distance).toFixed(1)+' m'],['Độ trễ Δt',(2*l.distance/l.soundSpeed).toFixed(3)+' s'],['Công thức','Δt = 2D/v']];
+  else metrics=[['Chương 2','Sóng cơ'],['Mô phỏng','Phản xạ / khúc xạ / nhiễu xạ'],['Gợi ý','Kéo để đổi tham số']];
+ }
+ else if(s.id==='pha')metrics=[['d / λ',l.d.toFixed(2)],['|Δφ|',(2*Math.PI*l.d).toFixed(2)+' rad'],['Trạng thái',Math.abs(l.d-Math.round(l.d))<.01?'Cùng pha':Math.abs(l.d-(Math.floor(l.d)+.5))<.01?'Ngược pha':Math.abs(l.d*2-Math.round(l.d*2))>.4?'Vuông pha':'Lệch pha']];
  else if(s.id==='amtanso')metrics=[['f',l.soundFrequency+' Hz'],['Phân loại',l.soundFrequency<16?'Hạ âm':l.soundFrequency<=20000?'Dải nghe được (theo tài liệu)':'Siêu âm'],['Độ cao','f tăng → âm cao hơn']];
  else if(s.id==='amsac')metrics=[['f',l.soundFrequency+' Hz'],['Dạng âm sắc',String(l.timbre)],['Kiến thức','Họa âm → dạng sóng → âm sắc']];
  else if(s.id==='amcuongdo')metrics=[['R',l.distance.toFixed(1)+' m'],['P',l.power+' W'],['I=P/(4πR²)',(l.power/(4*Math.PI*l.distance*l.distance)).toExponential(2)+' W/m²']];
@@ -197,7 +245,7 @@ function openProfile(){state.avatar={...state.user.avatar};$('profileName').text
 function drawOptions(){const el=$('customControls');el.replaceChildren();for(const [name,title] of [['skin','Màu da'],['hair','Màu tóc'],['outfit','Màu trang phục'],['style','Kiểu tóc'],['accessory','Phụ kiện']]){const h=document.createElement('div');h.className='swatch-title';h.textContent=title;const row=document.createElement('div');row.className=optionSets[name][0].startsWith('#')?'swatches':'option-row';for(const val of optionSets[name]){const b=document.createElement('button');b.type='button';b.className=(val.startsWith('#')?'swatch ':'')+(state.avatar[name]===val?'selected':'');if(val.startsWith('#')){b.style.background=val;b.title=val;}else b.textContent=avatarLabels[name]?.[val]||val;b.addEventListener('click',()=>{state.avatar[name]=val;drawOptions();});row.append(b)}el.append(h,row)}$('avatarPreview').textContent=state.avatar.accessory==='cat'?'🐱':state.avatar.accessory==='star'?'🌟':state.avatar.accessory==='glasses'?'🤓':'🧑‍🎓';}
 // -- minimal in-browser WebGL renderer, no external libraries or build step --
 const VERT=`attribute vec3 aPos;attribute vec3 aNormal;uniform mat4 uP,uV,uM;varying float vLight;varying vec3 vWorld;void main(){vec4 w=uM*vec4(aPos,1.);vec3 n=normalize(mat3(uM)*aNormal);vLight=.62+.38*max(dot(n,normalize(vec3(-.5,1.,.7))),0.);vWorld=w.xyz;gl_Position=uP*uV*w;}`;
-const FRAG=`precision mediump float;uniform vec3 uColor;varying float vLight;varying vec3 vWorld;void main(){float fog=clamp((length(vWorld.xz)-15.)/70.,0.,.35);vec3 c=uColor*vLight;gl_FragColor=vec4(mix(c,vec3(.76,.88,.94),fog),1.);}`;
+const FRAG=`precision mediump float;uniform vec3 uColor;varying float vLight;varying vec3 vWorld;void main(){float fog=clamp((length(vWorld.xz)-80.)/160.,0.,.12);vec3 c=uColor*vLight;gl_FragColor=vec4(mix(c,vec3(.76,.88,.94),fog),1.);}`;
 const I=()=>new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
 function multiply(a,b){let o=new Float32Array(16);for(let j=0;j<4;j++)for(let i=0;i<4;i++)for(let k=0;k<4;k++)o[j*4+i]+=a[k*4+i]*b[j*4+k];return o}
 function model(x,y,z,sx,sy,sz,r=0){const c=Math.cos(r),s=Math.sin(r);return new Float32Array([c*sx,0,-s*sx,0, 0,sy,0,0, s*sz,0,c*sz,0, x,y,z,1]);}
@@ -219,10 +267,10 @@ function init3D(){const canvas=$('world');const gl=canvas.getContext('webgl',{an
  const meshes={};for(const type of ['box','sphere','cyl','cone']){const data=meshData(type);const pb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,pb);gl.bufferData(gl.ARRAY_BUFFER,data.p,gl.STATIC_DRAW);const nb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,nb);gl.bufferData(gl.ARRAY_BUFFER,data.n,gl.STATIC_DRAW);meshes[type]={pb,nb,count:data.p.length/3}}
  R={gl,program,meshes,loc:{a:gl.getAttribLocation(program,'aPos'),n:gl.getAttribLocation(program,'aNormal'),P:gl.getUniformLocation(program,'uP'),V:gl.getUniformLocation(program,'uV'),M:gl.getUniformLocation(program,'uM'),C:gl.getUniformLocation(program,'uColor')},view:I(),proj:I()};
  gl.enable(gl.DEPTH_TEST);gl.clearColor(.77,.89,.96,1);for(const s of stations){const label=document.createElement('button');label.className='world-billboard';label.textContent=s.emoji+' '+s.label;label.addEventListener('click',()=>openLesson(s.id));$('gameUI').append(label);worldLabels.push({s,label});}
- let then=performance.now();function tick(now){if(now-then<(innerWidth<700?38:23)){requestAnimationFrame(tick);return;}const dt=Math.min(.04,(now-then)/1000);then=now;if(state.user&&!isDrawerOpen()){move(dt);}state.t+=dt;render();drawLab();requestAnimationFrame(tick)}requestAnimationFrame(tick);
+ let then=performance.now();function tick(now){if(now-then<(isTouchUI()?43:24)){requestAnimationFrame(tick);return;}const dt=Math.min(.04,(now-then)/1000);then=now;if(state.user&&!isDrawerOpen()){move(dt);}state.t+=dt;render();drawLab();requestAnimationFrame(tick)}requestAnimationFrame(tick);
 }
 function draw(type,color,x,y,z,sx=1,sy=1,sz=1,rot=0){if(!R)return;const {gl,loc,meshes}=R,mesh=meshes[type];gl.bindBuffer(gl.ARRAY_BUFFER,mesh.pb);gl.enableVertexAttribArray(loc.a);gl.vertexAttribPointer(loc.a,3,gl.FLOAT,false,0,0);gl.bindBuffer(gl.ARRAY_BUFFER,mesh.nb);gl.enableVertexAttribArray(loc.n);gl.vertexAttribPointer(loc.n,3,gl.FLOAT,false,0,0);gl.uniformMatrix4fv(loc.M,false,model(x,y,z,sx,sy,sz,rot));gl.uniform3fv(loc.C,rgb(color));gl.drawArrays(gl.TRIANGLES,0,mesh.count)}
-const lowPower=(innerWidth<850||Number(navigator.deviceMemory||8)<=4);
+const lowPower=(isTouchUI()||Number(navigator.deviceMemory||8)<=4);
 function ground(){draw('box','#87BE91',0,-.36,0,49,.7,49);
  // checker pastel tiles and paths
  for(let i=-22;i<=22;i+=3.3){draw('box','#F4DCC7',0,.009,i,3.3,.05,2.7);draw('box','#F4DCC7',i,.015,0,2.7,.05,3.3)}
@@ -318,9 +366,9 @@ function move(dt){
  const v=movementFromView(strafe,forward,state.camAngle);
  state.isWalking=Math.hypot(v.x,v.z)>.12;
  if(state.isWalking){
-  const speed=5.2;
-  state.x=clamp(state.x+v.x*dt*speed,-22.5,22.5);
-  state.z=clamp(state.z+v.z*dt*speed,-22.5,22.5);
+  const speed=isTouchUI()?8.2:8.8;
+  state.x=clamp(state.x+v.x*dt*speed,WORLD_BOUNDS.minX,WORLD_BOUNDS.maxX);
+  state.z=clamp(state.z+v.z*dt*speed,WORLD_BOUNDS.minZ,WORLD_BOUNDS.maxZ);
   state.rotation=facingFromMovement(v.x,v.z); // unified avatar pivot: head + hair use this same yaw
  }
  state.near=stations.reduce((a,s)=>{const dist=Math.hypot(s.x-state.x,s.z-state.z);return dist<4.2&&(!a||dist<a.d)?{...s,d:dist}:a},null);
@@ -333,13 +381,13 @@ function project(x,y,z){if(!R)return null;const m=multiply(R.proj,R.view);const 
 function render(){if(!R||!state.user)return;const {gl,loc}=R;const w=$('world').clientWidth,h=$('world').clientHeight,dpr=Math.min(1.6,devicePixelRatio||1);if(gl.canvas.width!==Math.floor(w*dpr)||gl.canvas.height!==Math.floor(h*dpr)){gl.canvas.width=Math.floor(w*dpr);gl.canvas.height=Math.floor(h*dpr)}gl.viewport(0,0,gl.canvas.width,gl.canvas.height);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(R.program);
  const eye=cameraEye(state.x,state.z,state.camAngle,state.camPitch,state.camDistance);
  const target=[state.x,1.42,state.z];
- R.proj=perspective(Math.PI/3.4,w/h,.1,130);R.view=lookAt(eye,target);gl.uniformMatrix4fv(loc.P,false,R.proj);gl.uniformMatrix4fv(loc.V,false,R.view);
+ R.proj=perspective(Math.PI/3.4,w/h,.1,210);R.view=lookAt(eye,target);gl.uniformMatrix4fv(loc.P,false,R.proj);gl.uniformMatrix4fv(loc.V,false,R.view);
  ground();stationStructures();chibi({x:state.x,z:state.z,rot:state.rotation,avatar:state.avatar},state.t,true);
  for(const p of state.others.values())chibi(p,state.t,false);
- for(const {s,label} of worldLabels){const q=project(s.x,3.05,s.z);label.style.display=q?.visible?'block':'none';if(q){label.style.left=q.x+'px';label.style.top=q.y+'px';}}
+ for(const {s,label} of worldLabels){const d=Math.hypot(s.x-state.x,s.z-state.z);const q=d<22?project(s.x,3.05,s.z):null;label.style.display=q?.visible&&!isTouchUI()?'block':'none';if(q){label.style.left=q.x+'px';label.style.top=q.y+'px';}}
  const holder=$('friendLabels');holder.replaceChildren();for(const p of state.others.values()){const q=project(p.x,2.75,p.z);if(q?.visible){const d=document.createElement('div');d.className='friend-label';d.style.left=q.x+'px';d.style.top=q.y+'px';d.textContent=p.nickname+' ✦'+p.score;holder.append(d)}}
 }
-function drawLab(){if(!state.station)return;const cv=$('labCanvas');if(!cv)return;const c=cv.getContext('2d');if(!c)return;const w=cv.width,h=cv.height,l=state.lab,s=state.station;const t=state.t;c.clearRect(0,0,w,h);c.fillStyle='#FFFFFF';c.fillRect(0,0,w,h);
+function drawLab(){if(!state.station)return;const cv=$('labCanvas');if(!cv)return;const c=cv.getContext('2d');if(!c)return;const w=cv.width,h=cv.height,l=state.lab,s=state.station;const t=state.t;if(drawChapterLab(c,w,h,s,l,t))return;c.clearRect(0,0,w,h);c.fillStyle='#FFFFFF';c.fillRect(0,0,w,h);
  c.strokeStyle='#E8EEF7';c.lineWidth=1;for(let y=20;y<h;y+=32){c.beginPath();c.moveTo(10,y);c.lineTo(w-10,y);c.stroke()}
  c.strokeStyle='#9BAFC8';c.lineWidth=1.4;c.beginPath();c.moveTo(8,h/2);c.lineTo(w-8,h/2);c.stroke();
  const period= Math.max(32,Math.min(420,80*l.v/l.f));

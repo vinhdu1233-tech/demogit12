@@ -65,11 +65,112 @@ function updateStationLinks(){
    button.append(symbol,desc,done);
    button.addEventListener('click',()=>{document.querySelector('.quest-panel').classList.remove('mobile-open');openLesson(s.id)});
    const travel=document.createElement('button');travel.className='travel-btn';travel.type='button';travel.title='Dịch chuyển tới trạm '+s.name;travel.textContent='📍';travel.setAttribute('aria-label','Đi tới trạm '+s.name);
-   travel.addEventListener('click',()=>{state.x=s.x;state.z=s.z+3.7;state.keys.clear();document.querySelector('.quest-panel').classList.remove('mobile-open');state.ws?.readyState===1&&state.ws.send(JSON.stringify({type:'travel',chapter:s.chapter,index:stationGroups.find(g=>g.number===s.chapter).stations.indexOf(s)}));toast('Đã đến '+s.name+' · nhấn Khám phá để học!')});
+   travel.addEventListener('click',()=>travelToStation(s));
    row.append(button,travel);panel.append(row);
   }
  }
 }
+// Mobile-first station selection: no need to aim precisely or walk across the large map.
+function travelToStation(s){
+ state.x=s.x;state.z=s.z+3.4;state.keys.clear();state.stick.x=0;state.stick.y=0;resetStick();
+ $('quickStations')?.classList.remove('is-open');$('quickStations')?.setAttribute('aria-hidden','true');
+ document.querySelector('.quest-panel')?.classList.remove('mobile-open');
+ const group=stationGroups.find(g=>g.number===s.chapter);
+ const index=group?.stations.indexOf(s)??-1;
+ if(state.ws?.readyState===1&&index>=0)state.ws.send(JSON.stringify({type:'travel',chapter:s.chapter,index}));
+ toast('📍 Đã tới '+s.name+' · chạm Vào học để bắt đầu');
+}
+function openQuickStations(){
+ if(!state.user)return;
+ const pane=$('quickStations'),list=$('quickStationsList');list.replaceChildren();
+ $('chatPanel').classList.remove('chat-visible');$('cameraController').classList.remove('is-open');
+ document.querySelector('.quest-panel').classList.remove('mobile-open');
+ const choices=[...stations].sort((a,b)=>Math.hypot(a.x-state.x,a.z-state.z)-Math.hypot(b.x-state.x,b.z-state.z)).slice(0,5);
+ for(const s of choices){
+  const card=document.createElement('div');card.className='quick-station-row';
+  const info=document.createElement('div');info.className='quick-station-info';
+  const title=document.createElement('b');title.textContent=s.emoji+' '+s.name;
+  const desc=document.createElement('small');desc.textContent='Bài '+s.chapter+' · '+effectTags[s.id]+' · '+s.quiz.filter(q=>(state.user.cleared||[]).includes(q[0])).length+'/'+s.quiz.length+' câu';
+  info.append(title,desc);
+  const learn=document.createElement('button');learn.className='quick-learn';learn.type='button';learn.textContent='Vào học';
+  learn.addEventListener('click',()=>{pane.classList.remove('is-open');pane.setAttribute('aria-hidden','true');openLesson(s.id)});
+  const go=document.createElement('button');go.className='quick-travel';go.type='button';go.textContent='📍 Đến';go.addEventListener('click',()=>travelToStation(s));
+  card.append(info,learn,go);list.append(card);
+ }
+ pane.classList.add('is-open');pane.setAttribute('aria-hidden','false');
+}
+function closeQuickStations(){const el=$('quickStations');el?.classList.remove('is-open');el?.setAttribute('aria-hidden','true')}
+function updateTouchAction(){
+ if(!state.user)return;
+ const button=$('mobileInteract');if(!button)return;
+ const near=state.near,now=near?.id||'';
+ if(button.dataset.near===now)return;
+ button.dataset.near=now;
+ button.textContent=near?'✦ Vào học · '+near.name:'🎯 Chọn trạm & học';
+ button.setAttribute('aria-label',near?'Vào học trạm '+near.name:'Chọn trạm để học và trả lời câu hỏi');
+}
+function initTouchHotspots(){
+ if(touchHotspots.length)return;
+ const root=$('stationHotspots');if(!root)return;
+ for(const s of stations){
+  const button=document.createElement('button');button.type='button';button.className='station-hotspot';
+  const icon=document.createElement('span');icon.textContent=s.emoji;icon.className='hotspot-emoji';
+  const info=document.createElement('span');info.className='hotspot-title';info.textContent=s.name;
+  const action=document.createElement('span');action.className='hotspot-action';action.textContent='VÀO HỌC';
+  button.append(icon,info,action);
+  button.setAttribute('aria-label','Mở bài học '+s.name);
+  button.addEventListener('click',e=>{e.stopPropagation();openLesson(s.id)});
+  root.append(button);touchHotspots.push({s,button});
+ }
+}
+function updateTouchHotspots(){
+ if(!touchHotspots.length)return;
+ const show=isTouchUI()&&state.user&&!isDrawerOpen()&&!$('quickStations').classList.contains('is-open')&&!document.querySelector('.quest-panel').classList.contains('mobile-open')&&!$('chatPanel').classList.contains('chat-visible');
+ let count=0;const placed=[];
+ const ranked=show?touchHotspots.map(a=>({...a,d:Math.hypot(a.s.x-state.x,a.s.z-state.z)})).filter(a=>a.d<21).sort((a,b)=>a.d-b.d):[];
+ for(const a of touchHotspots)a.button.style.display='none';
+ for(const a of ranked){
+  if(count>=3)break;
+  const q=project(a.s.x,3.9,a.s.z);if(!q?.visible||q.y<63||q.y>innerHeight-102||q.x<45||q.x>innerWidth-45)continue;
+  if(placed.some(p=>Math.hypot(p.x-q.x,p.y-q.y)<98))continue;
+  a.button.style.left=q.x+'px';a.button.style.top=q.y+'px';a.button.style.display='flex';
+  a.button.classList.toggle('is-near',a.d<6.3);
+  placed.push(q);count++;
+ }
+}
+function setupImmersiveMode(){
+ const button=$('fullscreenBtn'),help=$('fullscreenHelp');
+ const close=()=>help.classList.add('hidden');
+ $('fullscreenHelpClose')?.addEventListener('click',close);
+ button?.addEventListener('click',async()=>{
+  if(document.fullscreenElement){try{await document.exitFullscreen()}catch{}return}
+  if(window.matchMedia('(display-mode: standalone)').matches){toast('SóngVerse đang ở chế độ ứng dụng toàn màn hình');return}
+  if(document.documentElement.requestFullscreen){
+   try{
+    await document.documentElement.requestFullscreen({navigationUI:'hide'});
+    if(screen.orientation?.lock)try{await screen.orientation.lock('landscape')}catch{}
+    toast('🎮 Đã mở chế độ toàn màn hình');
+    return;
+   }catch{}
+  }
+  help.classList.remove('hidden');
+ });
+ const fit=()=>{
+  const h=window.visualViewport?.height||window.innerHeight;
+  document.documentElement.style.setProperty('--game-viewport-height',h+'px');
+  document.body.classList.toggle('game-landscape',window.innerWidth>window.innerHeight);
+ };
+ fit();window.addEventListener('resize',fit);window.addEventListener('orientationchange',fit);
+ window.visualViewport?.addEventListener('resize',fit);
+}
+function jumpLessonTo(id){
+ const target=$(id);
+ if(!target||$('lessonDrawer').classList.contains('hidden'))return;
+ if(id==='quizArea'){$('lessonDrawer').classList.add('show-quiz');target.scrollTop=0;}
+ else $('lessonDrawer').classList.remove('show-quiz');
+ target.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 let uiInit=false;
 function initUI(){if(uiInit)return;uiInit=true;
  document.querySelectorAll('.auth-tabs button').forEach(b=>b.addEventListener('click',()=>setAuthMode(b.dataset.mode)));
@@ -103,7 +204,12 @@ function initUI(){if(uiInit)return;uiInit=true;
  window.addEventListener('keyup',e=>{if(physical[e.code])state.keys.delete(physical[e.code])});
  window.addEventListener('blur',()=>{state.keys.clear();state.isWalking=false;});
  document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;const map={up:'w',down:'s',left:'a',right:'d'};const down=e=>{e.preventDefault();state.keys.add(map[k]);b.setPointerCapture(e.pointerId)};b.addEventListener('pointerdown',down);b.addEventListener('pointerup',()=>state.keys.delete(map[k]));b.addEventListener('pointercancel',()=>state.keys.delete(map[k]));});
- $('mobileInteract').addEventListener('click',()=>{if(state.near)openLesson(state.near.id);else toast('Đi gần một trạm học hoặc bấm vào danh sách trạm nhé!')});
+ $('mobileInteract').addEventListener('click',()=>{if(state.near)openLesson(state.near.id);else openQuickStations()});
+ $('quickStationsClose')?.addEventListener('click',closeQuickStations);
+ $('jumpToQuiz')?.addEventListener('click',()=>jumpLessonTo('quizArea'));
+ $('jumpToDemo')?.addEventListener('click',()=>jumpLessonTo('lessonDemo'));
+ setupImmersiveMode();
+ initTouchHotspots();
  $('mobileMapBtn').addEventListener('click',()=>{$('cameraController').classList.remove('is-open');$('chatPanel').classList.remove('chat-visible');document.querySelector('.quest-panel').classList.toggle('mobile-open')});
  $('closeMapBtn').addEventListener('click',()=>document.querySelector('.quest-panel').classList.remove('mobile-open'));
  $('saveReflection').addEventListener('click',saveReflection);
@@ -189,10 +295,10 @@ function connectWs(){if(state.ws)state.ws.close();state.others.clear();const url
 function countPlayers(){$('playerCount').textContent=1+state.others.size;}
 function message(from,txt){const m=document.createElement('div');m.className='message';const b=document.createElement('b');b.textContent=from;m.append(b,document.createTextNode(txt));$('chatMessages').append(m);$('chatMessages').scrollTop=100000;while($('chatMessages').children.length>30)$('chatMessages').firstChild.remove();}
 function systemMessage(t){const d=document.createElement('div');d.className='message system';d.textContent='✦ '+t;$('chatMessages').append(d);$('chatMessages').scrollTop=100000;}
-function openDrawer(which){document.querySelector('.quest-panel').classList.remove('mobile-open');$('cameraController').classList.remove('is-open');$('chatPanel').classList.remove('chat-visible');state.stick.x=0;state.stick.y=0;resetStick();$('shade').classList.remove('hidden');$('lessonDrawer').classList.toggle('hidden',which!=='lesson');$('profileDrawer').classList.toggle('hidden',which!=='profile');$('helpDrawer').classList.toggle('hidden',which!=='help');state.keys.clear();}
-function closeDrawer(){$('shade').classList.add('hidden');for(const id of ['lessonDrawer','profileDrawer','helpDrawer'])$(id).classList.add('hidden');state.station=null;}
+function openDrawer(which){closeQuickStations();document.querySelector('.quest-panel').classList.remove('mobile-open');$('cameraController').classList.remove('is-open');$('chatPanel').classList.remove('chat-visible');state.stick.x=0;state.stick.y=0;resetStick();$('shade').classList.remove('hidden');$('lessonDrawer').classList.toggle('hidden',which!=='lesson');$('profileDrawer').classList.toggle('hidden',which!=='profile');$('helpDrawer').classList.toggle('hidden',which!=='help');state.keys.clear();}
+function closeDrawer(){$('lessonDrawer').classList.remove('show-quiz');$('shade').classList.add('hidden');for(const id of ['lessonDrawer','profileDrawer','helpDrawer'])$(id).classList.add('hidden');state.station=null;}
 function isDrawerOpen(){return !$('shade').classList.contains('hidden')}
-function openLesson(id){if(!state.user)return;const s=stations.find(x=>x.id===id);if(!s)return;state.station=s;$('lessonEyebrow').textContent=s.emoji+' TRẠM '+String(stations.indexOf(s)+1).padStart(2,'0');$('lessonTitle').textContent=s.name;$('lessonIntro').textContent=s.intro;$('lessonExplain').textContent=s.explain;buildLab(s);buildQuizzes(s);openDrawer('lesson');loadReflection();}
+function openLesson(id){if(!state.user)return;closeQuickStations();const s=stations.find(x=>x.id===id);if(!s)return;state.station=s;$('lessonEyebrow').textContent=s.emoji+' TRẠM '+String(stations.indexOf(s)+1).padStart(2,'0');$('lessonTitle').textContent=s.name;$('lessonIntro').textContent=s.intro;$('lessonExplain').textContent=s.explain;buildLab(s);buildQuizzes(s);openDrawer('lesson');loadReflection();}
 function buildLab(s){
  const box=$('lessonDemo');box.replaceChildren();
  
@@ -264,7 +370,7 @@ function meshData(type){const p=[],n=[];const tri=(a,b,c,na,nb=na,nc=na)=>{p.pus
 }
 function shader(gl,type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
 const colorCache={};function rgb(hex){if(colorCache[hex])return colorCache[hex];const v=parseInt(hex.slice(1),16);return colorCache[hex]=[(v>>16&255)/255,(v>>8&255)/255,(v&255)/255]}
-let R=null,worldLabels=[];
+let R=null,worldLabels=[],touchHotspots=[];
 function init3D(){const canvas=$('world');const gl=canvas.getContext('webgl',{antialias:true,alpha:false})||canvas.getContext('experimental-webgl');if(!gl){$('fallback').classList.remove('hidden');return}state.gl=gl;
  const program=gl.createProgram();gl.attachShader(program,shader(gl,gl.VERTEX_SHADER,VERT));gl.attachShader(program,shader(gl,gl.FRAGMENT_SHADER,FRAG));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));gl.useProgram(program);
  const meshes={};for(const type of ['box','sphere','cyl','cone']){const data=meshData(type);const pb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,pb);gl.bufferData(gl.ARRAY_BUFFER,data.p,gl.STATIC_DRAW);const nb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,nb);gl.bufferData(gl.ARRAY_BUFFER,data.n,gl.STATIC_DRAW);meshes[type]={pb,nb,count:data.p.length/3}}
@@ -404,7 +510,8 @@ function move(dt){
   state.z=clamp(state.z+v.z*dt*speed,WORLD_BOUNDS.minZ,WORLD_BOUNDS.maxZ);
   state.rotation=facingFromMovement(v.x,v.z); // unified avatar pivot: head + hair use this same yaw
  }
- state.near=stations.reduce((a,s)=>{const dist=Math.hypot(s.x-state.x,s.z-state.z);return dist<4.2&&(!a||dist<a.d)?{...s,d:dist}:a},null);
+ state.near=stations.reduce((a,s)=>{const dist=Math.hypot(s.x-state.x,s.z-state.z);return dist<6.3&&(!a||dist<a.d)?{...s,d:dist}:a},null);
+ updateTouchAction();
  $('actionHint').classList.toggle('hidden',!state.near);
  if(state.near){$('actionHint').innerHTML='Nhấn <kbd>E</kbd> để mở '+state.near.name;$('nearHint').textContent='Bạn đang ở '+state.near.name;}
  else $('nearHint').textContent='Khám phá cùng bạn bè!';
@@ -417,6 +524,7 @@ function render(){if(!R||!state.user)return;const {gl,loc}=R;const w=$('world').
  R.proj=perspective(Math.PI/3.4,w/h,.1,210);R.view=lookAt(eye,target);gl.uniformMatrix4fv(loc.P,false,R.proj);gl.uniformMatrix4fv(loc.V,false,R.view);
  ground();stationStructures();chibi({x:state.x,z:state.z,rot:state.rotation,avatar:state.avatar},state.t,true);
  for(const p of state.others.values())chibi(p,state.t,false);
+ updateTouchHotspots();
  for(const {s,label} of worldLabels){const d=Math.hypot(s.x-state.x,s.z-state.z);const q=d<22?project(s.x,3.05,s.z):null;label.style.display=q?.visible&&!isTouchUI()?'block':'none';if(q){label.style.left=q.x+'px';label.style.top=q.y+'px';}}
  const holder=$('friendLabels');holder.replaceChildren();for(const p of state.others.values()){const q=project(p.x,2.75,p.z);if(q?.visible){const d=document.createElement('div');d.className='friend-label';d.style.left=q.x+'px';d.style.top=q.y+'px';d.textContent=p.nickname+' ✦'+p.score;holder.append(d)}}
 }

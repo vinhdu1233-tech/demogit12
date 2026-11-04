@@ -1,0 +1,19 @@
+{
+  "name": "SóngVerse 3D — Lớp học Chương 2 Sóng",
+  "short_name": "SóngVerse",
+  "description": "Học Vật lý 11 qua 34 trạm tương tác 3D, multiplayer và bài tập",
+  "start_url": "/?v=7",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#c6e4f7",
+  "theme_color": "#263d65",
+  "icons": [
+    {
+      "src": "/sv-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

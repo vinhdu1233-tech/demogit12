@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="theme-color" content="#d9ecfa"/>
-<title>SóngVerse 3D V5 • Học sóng cùng bạn bè</title>
+<title>SóngVerse 3D V6 • 6 khu khám phá Chương 2</title>
 <link rel="stylesheet" href="/style.css"/>
 </head>
 <body>
@@ -12,18 +12,18 @@
 <div id="gameUI" class="hidden">
  <div id="orientationNote" class="orientation-note" role="status">📱 Mẹo: Xoay ngang điện thoại để quan sát thế giới 3D rộng hơn.</div>
  <header class="topbar">
-  <div class="brand"><span class="brandmark">〰</span><div><b>SóngVerse</b><small>V5 • PHÒNG THÍ NGHIỆM 3D</small></div></div>
+  <div class="brand"><span class="brandmark">〰</span><div><b>SóngVerse</b><small>V6 • 6 KHU HỌC · 34 TRẠM</small></div></div>
   <div class="class-pill">🏫 <span id="roomName">PHYS11</span><span class="dot"></span><span id="playerCount">1</span> trực tuyến</div>
-  <div class="top-actions"><span class="xp" id="xp">✦ 0 XP</span><button id="profileBtn" class="roundbtn" title="Tùy chỉnh nhân vật">🎨</button><button id="cameraResetBtn" class="roundbtn" title="Đặt lại camera" aria-label="Đặt lại góc nhìn">📷</button><button id="musicBtn" class="roundbtn" title="Bật nhạc nền" aria-label="Bật hoặc tắt nhạc nền" aria-pressed="false">🔇</button><label class="music-volume" title="Âm lượng nhạc"><span>♪</span><input id="musicVolume" type="range" min="0" max="0.65" step="0.01" value="0.26" aria-label="Âm lượng nhạc nền"/></label><button id="helpBtn" class="roundbtn" title="Cách chơi">❔</button><button id="logoutBtn" class="roundbtn" title="Đăng xuất">↪</button></div>
+  <div class="top-actions"><span class="xp" id="xp">✦ 0 XP</span><button id="profileBtn" class="roundbtn" title="Tùy chỉnh nhân vật">🎨</button><button id="mobileCameraBtn" class="roundbtn touch-only" title="Mở camera" aria-label="Mở điều khiển góc nhìn" aria-expanded="false">🎥</button><button id="chatOpenBtn" class="roundbtn touch-only" title="Mở chat" aria-label="Mở trò chuyện lớp" aria-expanded="false">💬</button><button id="cameraResetBtn" class="roundbtn" title="Đặt lại camera" aria-label="Đặt lại góc nhìn">📷</button><button id="musicBtn" class="roundbtn" title="Bật nhạc nền" aria-label="Bật hoặc tắt nhạc nền" aria-pressed="false">🔇</button><label class="music-volume" title="Âm lượng nhạc"><span>♪</span><input id="musicVolume" type="range" min="0" max="0.65" step="0.01" value="0.26" aria-label="Âm lượng nhạc nền"/></label><button id="helpBtn" class="roundbtn" title="Cách chơi">❔</button><button id="logoutBtn" class="roundbtn" title="Đăng xuất">↪</button></div>
  </header>
  <aside class="quest-panel">
-  <div class="eyebrow">NHIỆM VỤ CHƯƠNG 2 <button id="closeMapBtn" class="close-map" type="button" aria-label="Đóng danh sách trạm">✕</button></div><h2>Khám phá thế giới sóng <span>🌊</span></h2>
-  <p>Đi tới các trạm, thử thí nghiệm và trả lời câu hỏi để nhận điểm.</p>
-  <div class="progressline"><div id="progressFill"></div></div><div class="progresscaption"><span id="progressText">0/22 câu hoàn thành</span><span id="badgeLabel">Tân binh sóng</span></div>
+  <div class="eyebrow">BẢN ĐỒ HỌC TẬP • 6 KHU VỰC <button id="closeMapBtn" class="close-map" type="button" aria-label="Đóng danh sách trạm">✕</button></div><h2>Khám phá thế giới sóng <span>🌊</span></h2>
+  <p>34 trạm · 6 bài · 68 thử thách. Chạm tên trạm để học hoặc 📍 để dịch chuyển nhanh tới vị trí trạm trong bản đồ.</p>
+  <div class="progressline"><div id="progressFill"></div></div><div class="progresscaption"><span id="progressText">0/68 câu hoàn thành</span><span id="badgeLabel">Tân binh sóng</span></div>
   <div id="stationLinks" class="station-links"></div>
   <p class="controls-hint">⌨️ WASD / phím mũi tên để đi • <b>E</b> để tương tác • kéo chuột trên cảnh, dùng hai thanh camera để xoay 360° và ngẩng/cúi • cuộn để zoom • 📷 đặt lại • J/L xoay trái/phải • I/K ngẩng/cúi • R đặt lại</p><div class="pedagogy-note"><b>Học để hiểu, không chỉ lấy điểm.</b><span>Ở mỗi trạm: Dự đoán → thử nghiệm → quan sát → giải thích → tự kiểm tra.</span></div>
  </aside>
- <div class="world-title"><span>🌈 WAVE CAMPUS</span><strong>Chạm vào trạm học để khám phá</strong><small id="nearHint">Khám phá cùng bạn bè!</small></div>
+ <div class="world-title"><span>🌈 WAVE CAMPUS</span><strong>34 trạm tương tác · 6 thế giới sóng</strong><small id="nearHint">Khám phá cùng bạn bè!</small></div>
  <aside class="chat-panel" id="chatPanel">
   <div class="chat-header"><div><b>💬 Bạn cùng lớp</b><span id="chatOnline">Đang kết nối...</span></div><button id="toggleChat" class="mini-btn">−</button></div>
   <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
@@ -35,7 +35,7 @@
    <div class="joystick-base"><div class="joystick-stick" id="joystickStick"></div></div>
    <span>DI CHUYỂN</span>
   </div>
-  <div class="mobile-actions"><span class="camera-hint">↔↕ Vuốt để xoay camera • 📷 đặt lại</span><button id="mobileInteract" class="interact-btn" type="button">🔎 Khám phá trạm</button><button id="mobileMapBtn" class="map-btn" type="button">☰ Danh sách trạm</button></div>
+  <div class="mobile-actions"><span class="camera-hint">↔↕ Vuốt để xoay camera • 📷 đặt lại</span><button id="mobileInteract" class="interact-btn" type="button">🔎 Học trạm gần</button><button id="mobileMapBtn" class="map-btn" type="button">☰ Bản đồ · 6 bài</button></div>
  </section>
  <div class="camera-controller" id="cameraController" aria-label="Điều khiển camera">
   <div class="camera-controller-title"><span>📷 GÓC NHÌN 360°</span><output id="cameraAngleLabel" aria-live="off">37° · 11°</output></div>
@@ -47,8 +47,8 @@
 <div id="toast" class="toast hidden" role="status"></div>
 <!-- AUTH -->
 <div id="authOverlay" class="overlay">
- <div class="auth-scene"><div class="auth-art"><div class="wave-doodle">〰〰〰</div><span class="bubble b1">🌊</span><span class="bubble b2">✨</span><span class="bubble b3">🧠</span><div class="chibi-emoji">👩🏻‍🚀</div><h1>Học sóng,<br/><em>chơi cùng nhau.</em></h1><p>Khám phá sóng cơ và sóng âm: từ nén–giãn tới âm sắc, cường độ và decibel trong thế giới 3D.</p></div>
- <div class="auth-card"><div class="pill">VẬT LÝ 11 • CHƯƠNG 2</div><h2>Chào mừng đến <span>SóngVerse!</span></h2><p class="muted">Tạo tài khoản và vào phòng lớp của bạn.</p>
+ <div class="auth-scene"><div class="auth-art"><div class="wave-doodle">〰〰〰</div><span class="bubble b1">🌊</span><span class="bubble b2">✨</span><span class="bubble b3">🧠</span><div class="chibi-emoji">👩🏻‍🚀</div><h1>Học sóng,<br/><em>chơi cùng nhau.</em></h1><p>Khám phá cả sáu bài: sóng cơ, sóng âm, sóng điện từ, giao thoa sóng nước, giao thoa ánh sáng và sóng dừng.</p></div>
+ <div class="auth-card"><div class="pill">VẬT LÝ 11 • TOÀN BỘ CHƯƠNG 2</div><h2>Chào mừng đến <span>SóngVerse!</span></h2><p class="muted">Tạo tài khoản và vào phòng lớp của bạn.</p>
   <div class="auth-tabs"><button class="active" data-mode="register">Tạo tài khoản</button><button data-mode="login">Đăng nhập</button></div>
   <form id="authForm" class="auth-form">
    <label>Tên đăng nhập<input id="username" maxlength="18" minlength="3" required autocomplete="username" placeholder="Ví dụ: song11a1"/></label>

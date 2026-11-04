@@ -2,8 +2,8 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<meta name="theme-color" content="#d9ecfa"/>
-<title>SóngVerse 3D V6 • 6 khu khám phá Chương 2</title>
+<meta name="theme-color" content="#263d65"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><meta name="apple-mobile-web-app-title" content="SóngVerse"/><meta name="mobile-web-app-capable" content="yes"/><link rel="manifest" href="/manifest.webmanifest"/>
+<title>SóngVerse 3D V7 • Mobile Classroom</title>
 <link rel="stylesheet" href="/style.css"/>
 </head>
 <body>
@@ -12,9 +12,9 @@
 <div id="gameUI" class="hidden">
  <div id="orientationNote" class="orientation-note" role="status">📱 Mẹo: Xoay ngang điện thoại để quan sát thế giới 3D rộng hơn.</div>
  <header class="topbar">
-  <div class="brand"><span class="brandmark">〰</span><div><b>SóngVerse</b><small>V6 • 6 KHU HỌC · 34 TRẠM</small></div></div>
+  <div class="brand"><span class="brandmark">〰</span><div><b>SóngVerse</b><small>V7 · 34 TRẠM</small></div></div>
   <div class="class-pill">🏫 <span id="roomName">PHYS11</span><span class="dot"></span><span id="playerCount">1</span> trực tuyến</div>
-  <div class="top-actions"><span class="xp" id="xp">✦ 0 XP</span><button id="profileBtn" class="roundbtn" title="Tùy chỉnh nhân vật">🎨</button><button id="mobileCameraBtn" class="roundbtn touch-only" title="Mở camera" aria-label="Mở điều khiển góc nhìn" aria-expanded="false">🎥</button><button id="chatOpenBtn" class="roundbtn touch-only" title="Mở chat" aria-label="Mở trò chuyện lớp" aria-expanded="false">💬</button><button id="cameraResetBtn" class="roundbtn" title="Đặt lại camera" aria-label="Đặt lại góc nhìn">📷</button><button id="musicBtn" class="roundbtn" title="Bật nhạc nền" aria-label="Bật hoặc tắt nhạc nền" aria-pressed="false">🔇</button><label class="music-volume" title="Âm lượng nhạc"><span>♪</span><input id="musicVolume" type="range" min="0" max="0.65" step="0.01" value="0.26" aria-label="Âm lượng nhạc nền"/></label><button id="helpBtn" class="roundbtn" title="Cách chơi">❔</button><button id="logoutBtn" class="roundbtn" title="Đăng xuất">↪</button></div>
+  <div class="top-actions"><span class="xp" id="xp">✦ 0 XP</span><button id="profileBtn" class="roundbtn" title="Tùy chỉnh nhân vật">🎨</button><button id="fullscreenBtn" class="roundbtn touch-only" title="Chế độ toàn màn hình" aria-label="Mở chế độ chơi toàn màn hình">⛶</button><button id="mobileCameraBtn" class="roundbtn touch-only" title="Mở camera" aria-label="Mở điều khiển góc nhìn" aria-expanded="false">🎥</button><button id="chatOpenBtn" class="roundbtn touch-only" title="Mở chat" aria-label="Mở trò chuyện lớp" aria-expanded="false">💬</button><button id="cameraResetBtn" class="roundbtn" title="Đặt lại camera" aria-label="Đặt lại góc nhìn">📷</button><button id="musicBtn" class="roundbtn" title="Bật nhạc nền" aria-label="Bật hoặc tắt nhạc nền" aria-pressed="false">🔇</button><label class="music-volume" title="Âm lượng nhạc"><span>♪</span><input id="musicVolume" type="range" min="0" max="0.65" step="0.01" value="0.26" aria-label="Âm lượng nhạc nền"/></label><button id="helpBtn" class="roundbtn" title="Cách chơi">❔</button><button id="logoutBtn" class="roundbtn" title="Đăng xuất">↪</button></div>
  </header>
  <aside class="quest-panel">
   <div class="eyebrow">BẢN ĐỒ HỌC TẬP • 6 KHU VỰC <button id="closeMapBtn" class="close-map" type="button" aria-label="Đóng danh sách trạm">✕</button></div><h2>Khám phá thế giới sóng <span>🌊</span></h2>
@@ -35,16 +35,17 @@
    <div class="joystick-base"><div class="joystick-stick" id="joystickStick"></div></div>
    <span>DI CHUYỂN</span>
   </div>
-  <div class="mobile-actions"><span class="camera-hint">↔↕ Vuốt để xoay camera • 📷 đặt lại</span><button id="mobileInteract" class="interact-btn" type="button">🔎 Học trạm gần</button><button id="mobileMapBtn" class="map-btn" type="button">☰ Bản đồ · 6 bài</button></div>
+  <div class="mobile-actions"><span class="camera-hint">↔↕ Vuốt để xoay camera • 📷 đặt lại</span><button id="mobileInteract" class="interact-btn" type="button">🎯 Chọn trạm & học</button><button id="mobileMapBtn" class="map-btn" type="button">☰ Bản đồ · 6 bài</button></div>
  </section>
+ <section id="quickStations" class="quick-stations" aria-label="Chọn trạm học gần nhất" aria-hidden="true"><div class="quick-stations-head"><div><small>KHÁM PHÁ NHANH</small><h3>Chọn trạm để vào học</h3></div><button id="quickStationsClose" type="button" aria-label="Đóng bảng trạm">✕</button></div><div id="quickStationsList" class="quick-stations-list"></div><p>Chạm <b>Học</b> để mở bài ngay, hoặc <b>Đến trạm</b> để dịch chuyển nhân vật trong thế giới 3D.</p></section>
  <div class="camera-controller" id="cameraController" aria-label="Điều khiển camera">
   <div class="camera-controller-title"><span>📷 GÓC NHÌN 360°</span><output id="cameraAngleLabel" aria-live="off">37° · 11°</output></div>
   <div id="cameraPad" class="camera-pad" role="group" aria-label="Giữ và kéo để xoay góc nhìn 3D"><span>↔ XOAY ↕</span><small>GIỮ & KÉO</small></div>
   <label class="camera-range">Xoay 360°<input id="yawSlider" type="range" min="0" max="360" value="37" step="1" aria-label="Xoay camera quanh nhân vật 360 độ"></label><label class="camera-range">Ngẩng / cúi<input id="pitchSlider" type="range" min="-10" max="76" value="5" step="1" aria-label="Độ cao camera"></label><div class="camera-buttons"><button type="button" data-orbit="left" title="Xoay trái" aria-label="Camera xoay trái">↶</button><button type="button" data-orbit="up" title="Nhìn từ trên" aria-label="Camera nâng lên">↑</button><button type="button" data-orbit="down" title="Nhìn ngang" aria-label="Camera hạ xuống">↓</button><button type="button" data-orbit="right" title="Xoay phải" aria-label="Camera xoay phải">↷</button><button id="cameraZoomIn" type="button" aria-label="Phóng gần">＋</button><button id="cameraZoomOut" type="button" aria-label="Thu xa">－</button></div>
  </div>
- <div id="friendLabels" aria-hidden="true"></div>
+ <div id="stationHotspots" class="station-hotspots" aria-label="Chạm trạm học trên bản đồ"></div><div id="friendLabels" aria-hidden="true"></div>
 </div>
-<div id="toast" class="toast hidden" role="status"></div>
+<div id="toast" class="toast hidden" role="status"></div><div id="fullscreenHelp" class="fullscreen-help hidden" role="dialog" aria-modal="true" aria-label="Chơi toàn màn hình trên điện thoại"><div><span>📱</span><h3>Chơi SóngVerse toàn màn hình</h3><p>Trên Safari iPhone, hãy nhấn <b>Chia sẻ → Thêm vào Màn hình chính</b>, rồi mở SóngVerse từ biểu tượng mới và <b>xoay ngang điện thoại</b>. Trình duyệt Safari không cho website tự ẩn thanh địa chỉ trong mọi trường hợp.</p><button id="fullscreenHelpClose" type="button">Đã hiểu</button></div></div>
 <!-- AUTH -->
 <div id="authOverlay" class="overlay">
  <div class="auth-scene"><div class="auth-art"><div class="wave-doodle">〰〰〰</div><span class="bubble b1">🌊</span><span class="bubble b2">✨</span><span class="bubble b3">🧠</span><div class="chibi-emoji">👩🏻‍🚀</div><h1>Học sóng,<br/><em>chơi cùng nhau.</em></h1><p>Khám phá cả sáu bài: sóng cơ, sóng âm, sóng điện từ, giao thoa sóng nước, giao thoa ánh sáng và sóng dừng.</p></div>
@@ -62,11 +63,11 @@
 <!-- DRAWERS -->
 <div id="shade" class="shade hidden"></div>
 <section class="drawer hidden" id="lessonDrawer" role="dialog" aria-modal="true" aria-label="Trạm học sóng">
- <div class="drawer-heading"><div><span class="eyebrow" id="lessonEyebrow">TRẠM 01</span><h2 id="lessonTitle">Thế giới sóng</h2></div><button class="closebtn" data-close="lesson">✕</button></div>
- <div class="drawer-scroll">
+ <div class="drawer-heading"><div class="lesson-heading-title"><span class="eyebrow" id="lessonEyebrow">TRẠM 01</span><h2 id="lessonTitle">Thế giới sóng</h2></div><div class="lesson-top-actions"><button id="jumpToDemo" class="lesson-nav-btn" type="button">🔬 Thí nghiệm</button><button id="jumpToQuiz" class="lesson-nav-btn primary" type="button">📝 Làm câu hỏi</button><button class="closebtn" data-close="lesson" aria-label="Đóng trạm học">✕</button></div></div>
+ <div class="drawer-scroll" id="lessonScroll">
   <p id="lessonIntro" class="lesson-intro"></p>
   <div class="learning-path"><b>Quy trình khám phá</b><span>① Dự đoán</span><span>② Điều chỉnh thí nghiệm</span><span>③ Giải thích kết quả</span><span>④ Tự kiểm tra</span></div><div id="lessonDemo"></div><div class="explain-card" id="lessonExplain"></div><div class="reflection-card"><label for="reflectionInput"><b>✍ Nhật kí khoa học</b><small>Hãy tự viết một điều em vừa quan sát và giải thích vì sao. Ghi chú được lưu trên thiết bị này.</small></label><textarea id="reflectionInput" rows="3" maxlength="450" placeholder="Em dự đoán rằng… Sau khi thử, em nhận thấy…"></textarea><div class="reflection-controls"><span id="reflectionStatus" aria-live="polite">Chưa ghi chú</span><button id="saveReflection" type="button">Lưu ghi chú</button></div></div>
-  <div class="quiz-area"><div class="eyebrow">🎯 THỬ THÁCH NHẬN XP</div><div id="quizContainer"></div></div>
+  <div class="quiz-area" id="quizArea"><div class="eyebrow">🎯 THỬ THÁCH NHẬN XP</div><div id="quizContainer"></div></div>
  </div>
 </section>
 <section class="drawer hidden" id="profileDrawer" role="dialog" aria-modal="true" aria-label="Tùy chỉnh nhân vật">

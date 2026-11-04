@@ -119,6 +119,11 @@ function clientIP(req) {
   return req.socket.remoteAddress||'?';
 }
 const CHAT_ENABLED=process.env.CHAT_ENABLED!=='false';
+// Reversible classroom pause while answer keys are being reviewed.
+// Toggle SONGVERSE_MAINTENANCE=true/false on Render; never delete Neon data.
+const MAINTENANCE_MODE=process.env.SONGVERSE_MAINTENANCE==='true';
+const maintenancePage=`<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>SóngVerse · Tạm nghỉ</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(145deg,#daeefa,#f2edff);font-family:system-ui,-apple-system,sans-serif;color:#28446d;padding:16px;box-sizing:border-box}main{width:min(500px,100%);padding:38px 27px;text-align:center;border-radius:24px;background:#ffffffee;box-shadow:0 20px 70px #304e7528}h1{font-size:28px;margin:12px 0}p{line-height:1.7}small{color:#687e9a}</style></head><body><main><div style="font-size:55px">🔬🌊</div><h1>SóngVerse đang tạm nghỉ</h1><p>Game tạm dừng để thầy cô kiểm tra và rà soát nội dung, đáp án Vật lý 11.</p><p>Tài khoản và điểm XP của các em vẫn được lưu. Hẹn gặp lại khi game mở cửa nhé!</p><small>Trân trọng cảm ơn tụi em đã tham gia 💙</small></main></body></html>`;
+
 const QUIZZES={
  'intro-1':1,'intro-2':2,'ngang-1':1,'ngang-2':1,'doc-1':0,'doc-2':2,
  'lambda-1':1,'lambda-2':0,'pha-1':2,'pha-2':1,'thuthach-1':1,'thuthach-2':0,
@@ -139,6 +144,12 @@ const server=http.createServer(async (req,res)=>{
   const host=req.headers.host||'localhost'; let url;
   try{url=new URL(req.url, 'http://'+host)}catch{return json(res,400,{error:'URL không hợp lệ'});}
   res.setHeader('X-Content-Type-Options','nosniff'); res.setHeader('Referrer-Policy','no-referrer');
+  if(MAINTENANCE_MODE){
+    res.setHeader('Cache-Control','no-store, max-age=0');
+    if(req.method==='GET'&&(url.pathname==='/'||url.pathname==='/index.html')){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});return res.end(maintenancePage)}
+    if(url.pathname.startsWith('/api/'))return json(res,503,{maintenance:true,error:'SóngVerse đang tạm dừng để kiểm tra đáp án.'});
+    res.writeHead(503,{'Content-Type':'text/plain; charset=utf-8','Retry-After':'3600'});return res.end('SóngVerse tạm dừng để kiểm tra đáp án.');
+  }
   if(url.pathname.startsWith('/api/')){
     const ip=clientIP(req);
     if(rateLimit(ipHits,ip,240))return json(res,429,{error:'Thao tác quá nhanh, hãy thử lại sau.'});
@@ -253,6 +264,7 @@ function onMessage(ws,msg){if(!msg||typeof msg!=='object')return;
  }
 }
 server.on('upgrade',(req,socket,head)=>{
+ if(MAINTENANCE_MODE){try{socket.end('HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\n\r\n')}catch{socket.destroy()}return;}
  if(req.url!=='/ws'||req.headers.upgrade?.toLowerCase()!=='websocket'||req.headers['sec-websocket-version']!=='13')return socket.destroy();
  const key=req.headers['sec-websocket-key'];if(typeof key!=='string'||!/^[-a-zA-Z0-9+/]{22}==$/.test(key))return socket.destroy();
  const accept=crypto.createHash('sha1').update(key+'258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
@@ -263,5 +275,5 @@ server.on('upgrade',(req,socket,head)=>{
 });
 const port=Number(process.env.PORT||3000), bind=process.env.HOST||'0.0.0.0';
 server.on('error',e=>{if(e.code==='EADDRINUSE'){console.error(`Cổng ${port} đã được dùng. Thử chạy: PORT=3001 node server.mjs`);process.exit(1)}else throw e});
-server.listen(port,bind,()=>console.log(`🌊 SóngVerse 3D đang chạy tại http://localhost:${port}`));
+server.listen(port,bind,()=>console.log(MAINTENANCE_MODE?'🔒 SóngVerse: Chế độ tạm dừng đang bật. Không cho đăng nhập/chơi/chat.':`🌊 SóngVerse 3D đang chạy tại http://localhost:${port}`));
 process.on('SIGINT',()=>{server.close();process.exit(0)});

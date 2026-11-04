@@ -170,3 +170,9 @@
  .top-actions .xp{font-size:9px!important}
  .top-actions .roundbtn{width:27px!important;min-width:27px!important}
 }
+
+@media (max-width:1100px), (hover:none) and (pointer:coarse){
+ .quest-panel.mobile-open,.drawer,.drawer-scroll,.chat-panel.chat-visible,.camera-controller.is-open{pointer-events:auto!important}
+ .quest-panel.mobile-open{-webkit-overflow-scrolling:touch}
+ .mobile-hud .mobile-actions,.mobile-hud .joystick-zone{pointer-events:auto}
+}

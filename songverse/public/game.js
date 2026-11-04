@@ -2,6 +2,7 @@
 import { movementFromView, rotateXZ, orbitBy, cameraEye, orbitByKey, facingFromMovement } from './controls.js';
 import {chapterZones,addedStations} from './chapter2.js';
 import {labConfigV6,drawChapterLab} from './lab-v6.js';
+import {renderStationEffect,effectTags} from './effects-v7.js';
 const $=id=>document.getElementById(id);
 const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
 const state={token:localStorage.getItem('sv_token')||'',user:null,room:localStorage.getItem('sv_room')||'11A1-SONG',ws:null,others:new Map(),x:0,z:0,rotation:0,keys:new Set(),camAngle:0.65,camPitch:0.08,camDistance:9,t:0,station:null,near:null,authMode:'register',avatar:null,lab:{f:2,v:4,A:.52,d:0.5,soundFrequency:500,timbre:1,distance:5,power:10,decibel:50,wavelengthNm:550,slitGap:.6,screenDistance:1.5,sourceSpacing:7,waveLength:5,phaseMode:0,harmonic:2,boundary:0,speedRatio:1,aperture:1.1,soundSpeed:340,vacuum:1,spectrum:3},lastMove:0,isWalking:false,gl:null,notice:null,drag:false,dragX:0,dragY:0,connection:'offline',stick:{x:0,y:0,pointer:null},reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches};
@@ -320,67 +321,20 @@ function fxOrbit(s,i,color,t){
    draw('sphere',color,s.x+Math.cos(a)*radius,2.86+.12*Math.sin(a*2+t),s.z+Math.sin(a)*radius,.11,.11,.11);
  }
 }
+// V7: each micro-station now has its own model and motion vocabulary.
 function stationStructures(){
  const t=state.t;
- for(let i=0;i<stations.length;i++){
-   const s=stations[i],dist=Math.hypot(s.x-state.x,s.z-state.z);
-   if(dist>33)continue;
-   const zone=chapterZones[s.chapter-1],color=zone.color;
-   const base=1.1+Math.sin(t*2.3+i*.83)*.045;
-   draw('cyl','#ffffff',s.x,.16,s.z,5.6,.25,5.6);
-   draw('cyl',color,s.x,.27,s.z,4.6,.2,4.6);
-   draw('cyl','#ffffff',s.x,1.14,s.z,1.35,1.55,1.35);
-   draw('sphere',color,s.x,2.25+Math.sin(t*1.8+i)*.085,s.z,base,.39,base);
-   draw('box','#ffffff',s.x,1.55,s.z+.98,1.3,.55,.15);
-   for(const side of [-1,1])draw('sphere','#e6ecf8',s.x+side*.3,1.54,s.z+1.12,.12,.12,.08);
-   fxOrbit(s,i,color,t);
-   const q=t*(s.chapter===2?2.8:1.8)+i*.62;
-   if(s.chapter===1){
-     // A transverse wave field rides along the mechanical-wave sculpture.
-     for(let j=0;j<10;j++){const v=j/9;draw('sphere','#e88fb8',s.x-2+v*4,3.7+Math.sin(v*7-q)*.45,s.z-.9,.095,.095,.095)}
-   }else if(s.chapter===2){
-     // Each acoustic instrument has its own animated pressure/echo pattern.
-     const speed=s.id==='amtanso'?2.3:s.id==='amcuongdo'?.75:s.id==='amdecibel'?1.25:1.65;
-     const size=s.id==='amsac'?.65:s.id==='amsieudung'?1.35:1;
-     for(let ring=0;ring<3;ring++){
-       const rr=.6+((t*speed+ring*.67+i*.19)%2.8)*size;
-       const dots=lowPower?8:12;
-       for(let j=0;j<dots;j++){const a=2*Math.PI*j/dots;
-         draw('sphere',ring===0?'#fff0a8':'#7de2ed',s.x+rr*Math.cos(a),2.45+Math.sin(q+ring)*.13,s.z+rr*Math.sin(a),.066,.065,.065)
-       }
-     }
-     if(s.id==='amcuongdo'||s.id==='amdecibel'||s.id==='amsac'){
-       for(let j=0;j<5;j++){const height=.3+Math.abs(Math.sin(q+j*1.3))*.85;draw('box',j%2?'#ffc58b':'#f6a2c5',s.x-1.1+j*.53,3.45+height*.5,s.z,.23,height,.22)}
-     }
-     if(s.id==='amphanxa'||s.id==='amsieudung'){draw('box','#fff2d4',s.x+2.6,1.4,s.z, .24,2,.8)}
-   }else if(s.chapter===3){
-     // Electromagnetic field components: two perpendicular colored ribbons.
-     for(let j=0;j<11;j++){const u=(j-5)*.4,sw=Math.sin(u*2.8-q);
-       draw('sphere','#e985c2',s.x+u,3.6+sw*.48,s.z,.1,.1,.1);
-       draw('sphere','#83a6f3',s.x+u,3.6,s.z+sw*.5,.09,.09,.09)
-     }
-   }else if(s.chapter===4){
-     // Two coherent sources produce outward moving circular water waves.
-     for(const dx of [-.8,.8])for(let j=0;j<2;j++){
-       const rr=.6+((t*.72+j*1.2+dx*.15)%2.45);
-       for(let k=0;k<(lowPower?9:13);k++){const a=k*2*Math.PI/(lowPower?9:13);
-         draw('sphere','#b9f3fa',s.x+dx+rr*Math.cos(a),.67,s.z+rr*Math.sin(a),.064,.047,.064)
-       }
-     }
-   }else if(s.chapter===5){
-     // Young / spectral colors: moving rays and split-light arcs.
-     const cols=['#f7a9b2','#f6d89e','#9cdbd9','#adb6f7','#d9a2e8'];
-     for(let j=0;j<5;j++){const u=(j-2)*.35;
-       draw('sphere',cols[j],s.x+u*2,3.2+.13*Math.sin(q+j),s.z+.7+.32*Math.sin(t+j),.12,.12,.12);
-       draw('sphere',cols[j],s.x+u*3,3.8+.10*Math.sin(q+j),s.z-1.1,.115,.115,.115);
-     }
-   }else if(s.chapter===6){
-     // A standing string: fixed nodes, bouncing antinodes.
-     const n=s.id==='dunghoam'?4:s.id==='dungtudo'?3:2;
-     for(let j=0;j<15;j++){const u=j/14;const amplitude=Math.sin(n*Math.PI*u)*Math.sin(q*2)*.55;
-       draw('sphere','#ffe3a7',s.x-2+u*4,3.65+amplitude,s.z-.8,.10,.10,.10)
-     }
-   }
+ for(const s of stations){
+  const dist=Math.hypot(s.x-state.x,s.z-state.z);
+  if(dist>(lowPower?25:32))continue;
+  const palette=chapterZones[s.chapter-1].color;
+  const selected=state.near?.id===s.id;
+  draw('cyl','#fbfeff',s.x,.14,s.z,4.8,.22,4.8);
+  draw('cyl',palette,s.x,.24,s.z,4.0,.16,4.0);
+  draw('cyl','#fffaf1',s.x,1.1,s.z,1.22,1.4,1.22);
+  draw('sphere',palette,s.x,2.06+Math.sin(t*2+s.x*.2)*.07,s.z,1.0,.28,1.0);
+  if(selected)for(let k=0;k<7;k++){const a=k*2*Math.PI/7+t*.6;draw('sphere','#ffe5a2',s.x+Math.cos(a)*2.9,1.15,s.z+Math.sin(a)*2.9,.12,.12,.12)}
+  renderStationEffect(draw,s,t,lowPower);
  }
 }
 function chibi(p,t,own=false){

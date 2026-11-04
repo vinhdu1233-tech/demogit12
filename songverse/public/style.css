@@ -48,3 +48,125 @@
 @media(max-width:700px) and (orientation:landscape){.camera-controller{top:50%;max-height:calc(100vh - 85px)}.camera-pad{height:30px}}
 
 .sound-presets{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0}.sound-presets button{background:#E7F1FD;color:#354e88;border:1px solid #cbdcf2;border-radius:10px;padding:8px;font-size:11px;font-weight:900}
+
+
+/* V6 TOUCH REBUILD: iPad landscape, small iPhone portrait and Android tablets.
+   All controls are deliberately within the visual viewport and separate panels. */
+.touch-only{display:none}
+.station-row{display:flex;align-items:stretch;gap:6px;min-width:0}
+.station-row .station-link{flex:1;min-width:0}
+.station-row .station-link>span:nth-child(2){min-width:0;flex:1}
+.station-row .station-link b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.travel-btn{flex:0 0 42px;border:1px solid #dce5fa;border-radius:12px;background:#f1f5ff;color:#445c91;font-weight:900;font-size:17px;min-height:42px}
+.travel-btn:hover{background:#ddeaff}
+.chapter-heading{position:sticky;top:-1px;z-index:1;background:#e9f1ff;color:#455c8b;border-radius:12px;padding:9px 11px;font-size:11px;font-weight:900;letter-spacing:.25px;margin:13px 0 6px}
+.station-row+.chapter-heading{margin-top:20px}
+.mobile-menu-tools{display:none}
+#gameUI{isolation:isolate}
+@media (max-width:1100px), (hover:none) and (pointer:coarse) {
+ html,body{height:100%;height:100dvh;overflow:hidden}
+ body{overscroll-behavior:none;touch-action:manipulation}
+ #world{width:100%;height:100dvh;inset:0;touch-action:none}
+ #gameUI{position:fixed;inset:0;overflow:hidden;pointer-events:none}
+ #gameUI button,#gameUI input,#gameUI textarea,#gameUI .joystick-zone,#gameUI .camera-pad{pointer-events:auto}
+ .touch-only{display:inline-grid!important;place-items:center}
+ .topbar{position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 5px)!important;left:calc(env(safe-area-inset-left,0px) + 7px)!important;right:calc(env(safe-area-inset-right,0px) + 7px)!important;bottom:auto!important;max-width:none;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:5px;z-index:14!important;pointer-events:none}
+ .brand{flex:0 0 auto;min-width:0;padding:5px 8px!important;border-radius:12px;box-shadow:0 3px 14px #25395928}
+ .brandmark{width:28px;height:28px;border-radius:9px;font-size:20px}
+ .brand b{font-size:14px!important;letter-spacing:-.5px}
+ .brand small{display:none!important}
+ .class-pill{flex:0 1 auto;min-width:0;max-width:125px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:8px 8px;font-size:10px;gap:3px;border-radius:11px}
+ .class-pill #roomName{max-width:66px;overflow:hidden;text-overflow:ellipsis}
+ .class-pill .dot{width:5px;height:5px;flex:0 0 5px}
+ .top-actions{flex:0 0 auto;min-width:0;gap:1px!important;padding:3px!important;border-radius:11px}
+ .top-actions .xp{font-size:10px!important;white-space:nowrap;padding:2px 3px}
+ .top-actions .roundbtn{width:31px!important;height:33px;min-width:31px!important;min-height:33px;font-size:17px;padding:0!important}
+ .top-actions .music-volume{display:none!important}
+ #cameraResetBtn,#helpBtn,#logoutBtn{display:none!important}
+ .world-title,.orientation-note,.world-billboard,.action-hint{display:none!important}
+ .quest-panel{position:fixed!important;inset:calc(env(safe-area-inset-top,0px) + 56px) 7px auto 7px!important;top:calc(env(safe-area-inset-top,0px) + 56px)!important;left:7px!important;right:7px!important;bottom:auto!important;width:auto!important;max-width:530px!important;height:auto;max-height:0!important;padding:0!important;opacity:0;visibility:hidden;overflow:hidden!important;z-index:13!important;border-radius:18px;transition:opacity .14s ease}
+ .quest-panel.mobile-open,.quest-panel.mobile-open:active,.quest-panel.mobile-open:focus-within{max-height:min(75dvh,680px)!important;height:auto!important;overflow:auto!important;padding:14px!important;opacity:1;visibility:visible;touch-action:pan-y;overscroll-behavior:contain}
+ .quest-panel.mobile-open .eyebrow,.quest-panel.mobile-open h2,.quest-panel.mobile-open p,.quest-panel.mobile-open .progressline,.quest-panel.mobile-open .progresscaption{display:block!important}
+ .quest-panel .controls-hint{display:none!important}
+ .quest-panel .pedagogy-note{display:none!important}
+ .quest-panel .station-links{display:grid!important;gap:5px;overflow:visible!important;max-width:100%}
+ .station-link{padding:7px 9px!important;min-height:43px!important;display:flex;gap:7px}
+ .station-link .symbol{flex:0 0 30px;width:30px!important;height:30px!important}
+ .station-link b{font-size:11px!important}
+ .station-link small,.station-link .done{display:block!important;font-size:9px}
+ .chapter-heading{font-size:10px;padding:8px 9px;margin:12px 0 5px}
+ .quest-panel .close-map{display:inline-block!important;float:right}
+ .mobile-menu-tools{display:flex;gap:8px;margin:13px 0 3px}
+ .mobile-menu-tools button{flex:1;background:#eef3fc;border:1px solid #dfe7f6;color:#445a83;border-radius:10px;padding:10px;font-weight:800}
+ .mobile-hud{position:fixed!important;left:calc(env(safe-area-inset-left,0px) + 8px);right:calc(env(safe-area-inset-right,0px) + 8px);bottom:calc(env(safe-area-inset-bottom,0px) + 8px)!important;padding:0!important;display:flex!important;justify-content:space-between;align-items:flex-end;gap:12px;pointer-events:none;z-index:9}
+ .mobile-hud>*{pointer-events:auto}
+ .joystick-zone{display:grid;justify-items:center;gap:3px;font-size:9px;color:#25476c;text-shadow:0 1px 3px #fff;font-weight:900;touch-action:none}
+ .joystick-base{width:98px!important;height:98px!important;background:#fffdf9d9;box-shadow:0 6px 20px #14325937;border:2px solid #fff}
+ .joystick-stick{width:46px!important;height:46px!important}
+ .mobile-actions{display:grid;gap:7px;justify-items:end;align-items:end}
+ .camera-hint{display:none!important}
+ .interact-btn,.map-btn{display:block!important;position:static!important;z-index:auto;min-height:43px!important;min-width:118px;max-width:142px!important;font-size:11px!important;line-height:1.25;padding:9px 10px!important;white-space:normal;border-radius:13px}
+ .interact-btn{background:#596dd1!important;color:#fff!important}
+ .map-btn{background:#fff!important;color:#435681!important;border:1px solid #dfe9ff}
+ .camera-controller{display:none!important}
+ .camera-controller.is-open{display:block!important;position:fixed;z-index:12;top:calc(env(safe-area-inset-top,0px) + 58px)!important;right:calc(env(safe-area-inset-right,0px) + 9px)!important;bottom:auto!important;left:auto!important;transform:none!important;width:min(218px,52vw)!important;max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 83px)!important;padding:11px!important;overflow-y:auto;box-shadow:0 12px 30px #25395660;border-radius:16px}
+ .camera-controller.is-open .camera-pad{height:65px!important}
+ .camera-controller .camera-range{font-size:11px}
+ .camera-controller .camera-buttons button{min-height:34px!important}
+ .chat-panel{display:none!important}
+ .chat-panel.chat-visible{display:flex!important;position:fixed;z-index:13;top:calc(env(safe-area-inset-top,0px) + 58px)!important;right:calc(env(safe-area-inset-right,0px) + 9px)!important;bottom:auto!important;left:auto!important;transform:none!important;width:min(335px,calc(100vw - 18px))!important;height:min(390px,calc(100dvh - 148px))!important;min-width:0!important;max-height:75dvh;border-radius:15px}
+ .chat-panel.chat-visible .chat-header{height:43px}
+ .chat-panel.chat-visible .chat-header b{font-size:12px}
+ .chat-panel.chat-visible .chat-form{flex:0 0 auto}
+ .chat-panel.chat-visible .chat-form input{font-size:16px}
+ .drawer{position:fixed;z-index:20;top:calc(env(safe-area-inset-top,0px) + 4px)!important;bottom:calc(env(safe-area-inset-bottom,0px) + 4px)!important;left:5px!important;right:5px!important;width:auto!important;max-width:none;border-radius:15px;max-height:none}
+ .drawer-heading{padding:12px 16px 9px;min-height:60px}
+ .drawer-heading h2{font-size:19px}
+ .drawer-scroll{padding:12px 14px 22px;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+ .lab-card{padding:10px!important}
+ .lab-canvas{height:clamp(115px,26dvh,190px)!important}
+ .lab-metric{gap:5px}
+ .lab-metric span{padding:6px 8px;max-width:100%;word-break:break-word}
+ .lesson-intro{font-size:12px}
+ .reflection-card textarea{max-width:100%}
+ .overlay{padding:8px;overflow:auto;overscroll-behavior:contain}
+ .auth-scene{grid-template-columns:1fr;min-height:0;width:min(480px,100%);max-height:calc(100dvh - 20px);border-radius:19px;overflow-y:auto}
+ .auth-art{min-height:95px!important;padding:14px 20px!important;justify-content:center}
+ .auth-art .chibi-emoji,.auth-art .bubble,.auth-art .wave-doodle{display:none}
+ .auth-art h1{font-size:21px!important;margin:0}
+ .auth-art p{font-size:10px;margin:3px 0 0;line-height:1.35;max-width:100%}
+ .auth-card{padding:16px 20px 18px!important}
+ .auth-card h2{font-size:21px;margin:8px 0 2px}
+ .auth-form{gap:7px}
+ .auth-form input{font-size:16px}
+ .primary-btn{min-height:43px}
+ .toast{bottom:calc(env(safe-area-inset-bottom,0px) + 122px);max-width:90vw;font-size:11px;padding:9px 12px;z-index:30}
+ .friend-label{display:none}
+}
+@media (max-height:540px) and (max-width:1100px), (max-height:540px) and (hover:none) and (pointer:coarse){
+ .topbar{top:3px!important}
+ .brand{padding:3px 5px!important}
+ .brandmark{width:25px;height:25px}
+ .brand b{font-size:12px!important}
+ .class-pill{font-size:9px;padding:6px}
+ .top-actions .roundbtn{width:30px!important;min-width:30px!important;height:30px}
+ .mobile-hud{bottom:calc(env(safe-area-inset-bottom,0px) + 4px)!important}
+ .joystick-base{width:77px!important;height:77px!important}
+ .joystick-stick{width:37px!important;height:37px!important}
+ .joystick-zone span{font-size:8px}
+ .interact-btn,.map-btn{min-height:36px!important;padding:6px 9px!important}
+ .quest-panel.mobile-open{top:48px!important;max-height:calc(100dvh - 58px)!important}
+ .camera-controller.is-open{top:47px!important;max-height:calc(100dvh - 110px)!important}
+ .camera-controller.is-open .camera-pad{height:34px!important}
+ .chat-panel.chat-visible{top:48px!important;height:calc(100dvh - 116px)!important}
+ .auth-art{display:none!important}
+ .auth-card{padding:12px 17px!important}
+ .auth-card h2{font-size:18px}
+ .auth-card .muted{margin:2px 0 7px}
+}
+@media (max-width:390px) {
+ .brand b{font-size:12px!important}
+ .class-pill{max-width:78px;font-size:9px}
+ .top-actions .xp{font-size:9px!important}
+ .top-actions .roundbtn{width:27px!important;min-width:27px!important}
+}

@@ -3,6 +3,7 @@ import { movementFromView, rotateXZ, orbitBy, cameraEye, orbitByKey, facingFromM
 import {chapterZones,addedStations} from './chapter2.js';
 import {labConfigV6,drawChapterLab} from './lab-v6.js';
 import {renderStationEffect,effectTags} from './effects-v7.js';
+import {EXAM_BANK} from './review-bank-v8.js';
 const $=id=>document.getElementById(id);
 const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
 const state={token:localStorage.getItem('sv_token')||'',user:null,room:localStorage.getItem('sv_room')||'11A1-SONG',ws:null,others:new Map(),x:0,z:0,rotation:0,keys:new Set(),camAngle:0.65,camPitch:0.08,camDistance:9,t:0,station:null,near:null,authMode:'register',avatar:null,lab:{f:2,v:4,A:.52,d:0.5,soundFrequency:500,timbre:1,distance:5,power:10,decibel:50,wavelengthNm:550,slitGap:.6,screenDistance:1.5,sourceSpacing:7,waveLength:5,phaseMode:0,harmonic:2,boundary:0,speedRatio:1,aperture:1.1,soundSpeed:340,vacuum:1,spectrum:3},lastMove:0,isWalking:false,gl:null,notice:null,drag:false,dragX:0,dragY:0,connection:'offline',stick:{x:0,y:0,pointer:null},reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches};
@@ -22,6 +23,18 @@ const stations=[
 // Physics 11 full Chapter 2: extend the original 11 stations to 34.
 stations.forEach((s,i)=>{s.chapter=i<6?1:2});
 stations.push(...addedStations);
+// V8 questions: two original questions from the uploaded Physics 11 exams per station.
+// Old attempts stay in the account for historical XP, but do not mark new questions as completed.
+for(let i=0;i<stations.length;i++){
+ const list=EXAM_BANK.filter(x=>x.station===i+1);
+ if(list.length!==2)throw Error('SóngVerse V8: Trạm '+(i+1)+' không có đủ 2 câu hỏi.');
+ stations[i].quiz=list.map(x=>[
+  x.id,x.question,x.options,x.answer,
+  'Nguồn: '+(x.source.exam<=11?'Đề luyện tập thường xuyên số '+x.source.exam:'Đề ôn tập cuối Chương 2')+
+  ', câu '+x.source.number+', trang '+x.source.page+'.'
+ ]);
+}
+
 const stationGroups=chapterZones.map(z=>({...z,stations:stations.filter(s=>s.chapter===z.number)}));
 for(const g of stationGroups){
  const n=g.stations.length;
@@ -48,7 +61,7 @@ async function startGame(){
  fetch('/api/health').then(r=>r.json()).then(cfg=>{if(cfg.chatEnabled===false){$('chatPanel').classList.add('hidden');$('mobileChatFab')?.classList.add('hidden');$('chatOpenBtn')?.classList.add('hidden');toast('Phòng học đang tắt trò chuyện để tập trung học tập')}else{$('mobileChatFab')?.classList.remove('hidden');$('chatOpenBtn')?.classList.remove('hidden')}}).catch(()=>{});
  if(isTouchUI()){$('chatPanel').classList.add('collapsed');$('chatPanel').classList.remove('chat-visible');syncMobileChat()};toast('Chào mừng '+state.user.nickname+'! Hãy dự đoán, thí nghiệm và giải thích 🌊');
 }
-function updateProgress(){const c=(state.user?.cleared||[]).filter(id=>stations.some(s=>s.quiz.some(q=>q[0]===id))).length;$('xp').textContent='✦ '+(c*100)+' XP';$('progressFill').style.width=(100*c/TOTAL_QUESTIONS)+'%';$('progressText').textContent=c+'/'+TOTAL_QUESTIONS+' câu hoàn thành';$('badgeLabel').textContent=c===TOTAL_QUESTIONS?'🏆 Bậc thầy sóng':c>=Math.ceil(TOTAL_QUESTIONS*.65)?'🌟 Nhà khoa học':c>=Math.ceil(TOTAL_QUESTIONS*.25)?'🔎 Nhà khám phá':'Tân binh sóng';if($('profileScore'))$('profileScore').textContent=(c*100)+' XP đã đạt';updateStationLinks()}
+function updateProgress(){const c=(state.user?.cleared||[]).filter(id=>stations.some(s=>s.quiz.some(q=>q[0]===id))).length;$('xp').textContent='✦ '+((state.user?.cleared||[]).length*100)+' XP';$('progressFill').style.width=(100*c/TOTAL_QUESTIONS)+'%';$('progressText').textContent=c+'/'+TOTAL_QUESTIONS+' câu hoàn thành';$('badgeLabel').textContent=c===TOTAL_QUESTIONS?'🏆 Bậc thầy sóng':c>=Math.ceil(TOTAL_QUESTIONS*.65)?'🌟 Nhà khoa học':c>=Math.ceil(TOTAL_QUESTIONS*.25)?'🔎 Nhà khám phá':'Tân binh sóng';if($('profileScore'))$('profileScore').textContent=((state.user?.cleared||[]).length*100)+' XP đã đạt';updateStationLinks()}
 function updateStationLinks(){
  const panel=$('stationLinks');panel.replaceChildren();
  for(const g of stationGroups){

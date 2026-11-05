@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { chapterZones, addedStations } from './public/chapter2.js';
+import { EXAM_BANK } from './public/review-bank-v8.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(ROOT, 'public');
@@ -124,13 +125,9 @@ const CHAT_ENABLED=process.env.CHAT_ENABLED!=='false';
 const MAINTENANCE_MODE=process.env.SONGVERSE_MAINTENANCE==='true';
 const maintenancePage=`<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>SóngVerse · Tạm nghỉ</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(145deg,#daeefa,#f2edff);font-family:system-ui,-apple-system,sans-serif;color:#28446d;padding:16px;box-sizing:border-box}main{width:min(500px,100%);padding:38px 27px;text-align:center;border-radius:24px;background:#ffffffee;box-shadow:0 20px 70px #304e7528}h1{font-size:28px;margin:12px 0}p{line-height:1.7}small{color:#687e9a}</style></head><body><main><div style="font-size:55px">🔬🌊</div><h1>SóngVerse đang tạm nghỉ</h1><p>Game tạm dừng để thầy cô kiểm tra và rà soát nội dung, đáp án Vật lý 11.</p><p>Tài khoản và điểm XP của các em vẫn được lưu. Hẹn gặp lại khi game mở cửa nhé!</p><small>Trân trọng cảm ơn tụi em đã tham gia 💙</small></main></body></html>`;
 
-const QUIZZES={
- 'intro-1':1,'intro-2':2,'ngang-1':1,'ngang-2':1,'doc-1':0,'doc-2':2,
- 'lambda-1':1,'lambda-2':0,'pha-1':2,'pha-2':1,'thuthach-1':1,'thuthach-2':0,
- 'amnguon-1':0,'amnguon-2':1,'amtanso-1':2,'amtanso-2':0,'amsac-1':0,'amsac-2':1,
- 'amcuongdo-1':2,'amcuongdo-2':0,'amdecibel-1':0,'amdecibel-2':0
-};
-for (const station of addedStations) for (const q of station.quiz) QUIZZES[q[0]] = q[3];
+// The server uses exactly the same 68 original review-exam questions as the browser.
+// Old answer IDs are not accepted; previous records remain stored in Neon for XP history.
+const QUIZZES=Object.fromEntries(EXAM_BANK.map(q=>[q.id,q.answer]));
 const active = new Map(); // each socket -> {user,room,x,z,...}
 const rosters = () => [...active.values()];
 function peerView(p){return {id:p.user.id,nickname:p.user.nickname,avatar:p.user.avatar,x:p.x,z:p.z,rot:p.rot,score:(p.user.cleared||[]).length*100};}

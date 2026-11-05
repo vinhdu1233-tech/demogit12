@@ -74,7 +74,7 @@ const avatarLabels={style:{bob:'Tóc bob',spiky:'Tóc nhọn',bun:'Búi tóc',sh
 function toast(s){const t=$('toast');t.textContent=s;t.classList.remove('hidden');clearTimeout(state.notice);state.notice=setTimeout(()=>t.classList.add('hidden'),3500)}
 async function api(endpoint,body,authenticated=true){const headers={'Content-Type':'application/json'};if(authenticated&&state.token)headers.Authorization='Bearer '+state.token;const r=await fetch('/api/'+endpoint,{method:body===undefined?'GET':'POST',headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json();if(!r.ok)throw Error(data.error||'Có lỗi xảy ra');return data}
 function cleanRoom(v){return String(v||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,18)}
-function showAuth(){document.body.classList.remove('sv-embedded-landscape');fitEmbeddedOrientation();unreadMobileChat=0;$('chatPanel')?.classList.remove('chat-visible');syncMobileChat();state.user=null;$('gameUI').classList.add('hidden');$('authOverlay').classList.remove('hidden');$('roomInput').value=state.room}
+function showAuth(){unreadMobileChat=0;$('chatPanel')?.classList.remove('chat-visible');syncMobileChat();state.user=null;fitEmbeddedOrientation();$('gameUI').classList.add('hidden');$('authOverlay').classList.remove('hidden');$('roomInput').value=state.room}
 function loginReady(data){state.token=data.token;state.user=data.user;state.avatar={...data.user.avatar};localStorage.setItem('sv_token',data.token);state.room=cleanRoom($('roomInput').value)||state.room;localStorage.setItem('sv_room',state.room);startGame()}
 async function startGame(){
  fitEmbeddedOrientation();

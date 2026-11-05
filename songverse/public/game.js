@@ -6,6 +6,26 @@ import {renderStationEffect,effectTags} from './effects-v7.js';
 import {EXAM_BANK} from './review-bank-v8.js';
 const $=id=>document.getElementById(id);
 const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+// Embedded Messenger/Zalo browsers may not support native landscape orientation.
+// Only their portrait *gameplay viewport* receives the CSS-rotated landscape fallback.
+// External Safari/Chrome, desktop, auth screens and database/gameplay logic stay unchanged.
+const embeddedAppBrowser=/(?:zalo|messenger|fban|fbav|fb_iab|fb4a|fbios)/i.test(navigator.userAgent||'')||
+ /(?:zalo|facebook|messenger)\.(?:me|com)/i.test(document.referrer||'');
+const userForcesLandscape=new URLSearchParams(location.search).get('landscape')==='1';
+function embeddedLandscapeActive(){return document.body.classList.contains('sv-embedded-landscape')}
+function fitEmbeddedOrientation(){
+ const viewportWidth=document.documentElement.clientWidth||window.innerWidth;
+ const viewportHeight=window.innerHeight;
+ const portrait=viewportHeight>viewportWidth*1.08;
+ const enable=Boolean(state.user)&&(embeddedAppBrowser||userForcesLandscape)&&portrait;
+ document.body.classList.toggle('sv-embedded-landscape',enable);
+ document.documentElement.style.setProperty('--sv-portrait-width',viewportWidth+'px');
+ document.documentElement.style.setProperty('--sv-long-side',viewportHeight+'px');
+ document.documentElement.style.setProperty('--sv-short-side',viewportWidth+'px');
+ document.documentElement.style.setProperty('--game-viewport-height',(enable?viewportWidth:(window.visualViewport?.height||viewportHeight))+'px');
+ document.body.classList.toggle('game-landscape',enable||viewportWidth>=viewportHeight);
+}
+
 const state={token:localStorage.getItem('sv_token')||'',user:null,room:localStorage.getItem('sv_room')||'11A1-SONG',ws:null,others:new Map(),x:0,z:0,rotation:0,keys:new Set(),camAngle:0.65,camPitch:0.08,camDistance:9,t:0,station:null,near:null,authMode:'register',avatar:null,lab:{f:2,v:4,A:.52,d:0.5,soundFrequency:500,timbre:1,distance:5,power:10,decibel:50,wavelengthNm:550,slitGap:.6,screenDistance:1.5,sourceSpacing:7,waveLength:5,phaseMode:0,harmonic:2,boundary:0,speedRatio:1,aperture:1.1,soundSpeed:340,vacuum:1,spectrum:3},lastMove:0,isWalking:false,gl:null,notice:null,drag:false,dragX:0,dragY:0,connection:'offline',stick:{x:0,y:0,pointer:null},reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches};
 const stations=[
 {id:'intro',x:0,z:-11,emoji:'🌊',name:'Bản chất của sóng',label:'BẢN CHẤT SÓNG',intro:'Hãy nhìn gợn sóng lan ra trên hồ. Điều đang lan truyền là trạng thái dao động và năng lượng, chứ không phải mọi giọt nước cùng chạy theo ngọn sóng.',explain:'Theo trang 3: Sóng là sự lan truyền dao động trong không gian theo thời gian. Sóng cơ cần môi trường vật chất đàn hồi; phần tử môi trường chỉ dao động quanh vị trí cân bằng. Đừng nhầm tốc độ truyền sóng với tốc độ của phần tử!',quiz:[['intro-1','Bản chất của sóng cơ là gì?',['Sự di chuyển toàn bộ vật chất','Sự lan truyền dao động trong môi trường','Mọi phần tử đứng yên'],1,'Sóng cơ truyền dao động và năng lượng; vật chất không đi theo toàn bộ sóng.'],['intro-2','Khi sóng lan truyền trên dây, phát biểu nào đúng?',['Mọi phần tử chuyển từ đầu dây đến cuối dây','Tốc độ phần tử luôn bằng tốc độ truyền sóng','Dao động và năng lượng được truyền đi'],2,'Các phần tử dây dao động quanh vị trí cân bằng, còn nhiễu loạn truyền sang phần tử kế tiếp.']]},
@@ -54,9 +74,10 @@ const avatarLabels={style:{bob:'Tóc bob',spiky:'Tóc nhọn',bun:'Búi tóc',sh
 function toast(s){const t=$('toast');t.textContent=s;t.classList.remove('hidden');clearTimeout(state.notice);state.notice=setTimeout(()=>t.classList.add('hidden'),3500)}
 async function api(endpoint,body,authenticated=true){const headers={'Content-Type':'application/json'};if(authenticated&&state.token)headers.Authorization='Bearer '+state.token;const r=await fetch('/api/'+endpoint,{method:body===undefined?'GET':'POST',headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json();if(!r.ok)throw Error(data.error||'Có lỗi xảy ra');return data}
 function cleanRoom(v){return String(v||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,18)}
-function showAuth(){unreadMobileChat=0;$('chatPanel')?.classList.remove('chat-visible');syncMobileChat();state.user=null;$('gameUI').classList.add('hidden');$('authOverlay').classList.remove('hidden');$('roomInput').value=state.room}
+function showAuth(){document.body.classList.remove('sv-embedded-landscape');fitEmbeddedOrientation();unreadMobileChat=0;$('chatPanel')?.classList.remove('chat-visible');syncMobileChat();state.user=null;$('gameUI').classList.add('hidden');$('authOverlay').classList.remove('hidden');$('roomInput').value=state.room}
 function loginReady(data){state.token=data.token;state.user=data.user;state.avatar={...data.user.avatar};localStorage.setItem('sv_token',data.token);state.room=cleanRoom($('roomInput').value)||state.room;localStorage.setItem('sv_room',state.room);startGame()}
 async function startGame(){
+ fitEmbeddedOrientation();
  $('authOverlay').classList.add('hidden');$('gameUI').classList.remove('hidden');$('roomName').textContent=state.room;updateProgress();initUI();if(!state.gl)init3D();connectWs();
  fetch('/api/health').then(r=>r.json()).then(cfg=>{if(cfg.chatEnabled===false){$('chatPanel').classList.add('hidden');$('mobileChatFab')?.classList.add('hidden');$('chatOpenBtn')?.classList.add('hidden');toast('Phòng học đang tắt trò chuyện để tập trung học tập')}else{$('mobileChatFab')?.classList.remove('hidden');$('chatOpenBtn')?.classList.remove('hidden')}}).catch(()=>{});
  if(isTouchUI()){$('chatPanel').classList.add('collapsed');$('chatPanel').classList.remove('chat-visible');syncMobileChat()};toast('Chào mừng '+state.user.nickname+'! Hãy dự đoán, thí nghiệm và giải thích 🌊');
@@ -144,7 +165,7 @@ function updateTouchHotspots(){
  for(const a of touchHotspots)a.button.style.display='none';
  for(const a of ranked){
   if(count>=3)break;
-  const q=project(a.s.x,3.9,a.s.z);if(!q?.visible||q.y<63||q.y>innerHeight-102||q.x<45||q.x>innerWidth-45)continue;
+  const q=project(a.s.x,3.9,a.s.z);const viewW=$('world').clientWidth,viewH=$('world').clientHeight;if(!q?.visible||q.y<54||q.y>viewH-86||q.x<45||q.x>viewW-45)continue;
   if(placed.some(p=>Math.hypot(p.x-q.x,p.y-q.y)<98))continue;
   a.button.style.left=q.x+'px';a.button.style.top=q.y+'px';a.button.style.display='flex';
   a.button.classList.toggle('is-near',a.d<6.3);
@@ -168,17 +189,14 @@ function setupImmersiveMode(){
   }
   help.classList.remove('hidden');
  });
- const fit=()=>{
-  const h=window.visualViewport?.height||window.innerHeight;
-  document.documentElement.style.setProperty('--game-viewport-height',h+'px');
-  document.body.classList.toggle('game-landscape',window.innerWidth>window.innerHeight);
- };
+ const fit=()=>fitEmbeddedOrientation();
  fit();window.addEventListener('resize',fit);window.addEventListener('orientationchange',fit);
  window.visualViewport?.addEventListener('resize',fit);
+ screen.orientation?.addEventListener?.('change',fit);
 }
 function jumpLessonTo(id){
  const target=$(id);if(!target||$('lessonDrawer').classList.contains('hidden'))return;
- const isLandscape=isTouchUI()&&window.innerWidth>window.innerHeight;
+ const isLandscape=isTouchUI()&&(window.innerWidth>window.innerHeight||embeddedLandscapeActive());
  if(id==='quizArea'){$('lessonDrawer').classList.add('show-quiz');if(isLandscape){target.scrollTop=0;target.querySelector('.choices button:not([disabled])')?.focus({preventScroll:true});return;}}
  else $('lessonDrawer').classList.remove('show-quiz');
  target.scrollIntoView({behavior:'smooth',block:'start'});
@@ -287,7 +305,7 @@ function attachCameraDrag(target){
  target.addEventListener('pointermove',e=>{
   if(pointer!==e.pointerId||isDrawerOpen())return;
   e.preventDefault();
-  const next=orbitBy(state.camAngle,state.camPitch,e.clientX-prevX,e.clientY-prevY);
+  const dx=e.clientX-prevX,dy=e.clientY-prevY;const next=embeddedLandscapeActive()?orbitBy(state.camAngle,state.camPitch,dy,-dx):orbitBy(state.camAngle,state.camPitch,dx,dy);
   state.camAngle=next.angle;state.camPitch=next.pitch;
   prevX=e.clientX;prevY=e.clientY;updateCameraLabel();
  });
@@ -309,7 +327,7 @@ function setupCameraControls(){
 function resetStick(){const el=$('joystickStick');if(el)el.style.transform='translate(-50%,-50%)'}
 function setupJoystick(){
  const zone=$('joystickZone'),knob=$('joystickStick');if(!zone||!knob)return;
- const update=e=>{const b=zone.querySelector('.joystick-base').getBoundingClientRect();const cx=b.left+b.width/2,cy=b.top+b.height/2;let x=e.clientX-cx,y=e.clientY-cy;const max=b.width*.35,dist=Math.hypot(x,y);if(dist>max){x*=max/dist;y*=max/dist}state.stick.x=x/max;state.stick.y=y/max;knob.style.transform=`translate(calc(-50% + ${x}px),calc(-50% + ${y}px))`};
+ const update=e=>{const b=zone.querySelector('.joystick-base').getBoundingClientRect();const cx=b.left+b.width/2,cy=b.top+b.height/2;let x=e.clientX-cx,y=e.clientY-cy;if(embeddedLandscapeActive()) [x,y]=[y,-x];const max=Math.min(b.width,b.height)*.35,dist=Math.hypot(x,y);if(dist>max){x*=max/dist;y*=max/dist}state.stick.x=x/max;state.stick.y=y/max;knob.style.transform=`translate(calc(-50% + ${x}px),calc(-50% + ${y}px))`};
  zone.addEventListener('pointerdown',e=>{if(state.stick.pointer!==null)return;e.preventDefault();state.stick.pointer=e.pointerId;zone.setPointerCapture(e.pointerId);update(e)});
  zone.addEventListener('pointermove',e=>{if(state.stick.pointer===e.pointerId){e.preventDefault();update(e)}});
  const stop=e=>{if(state.stick.pointer!==e.pointerId)return;state.stick.pointer=null;state.stick.x=0;state.stick.y=0;resetStick()};
@@ -557,7 +575,7 @@ function move(dt){
  else $('nearHint').textContent='Khám phá cùng bạn bè!';
  const now=Date.now();if(state.ws?.readyState===1&&now-state.lastMove>110){state.lastMove=now;state.ws.send(JSON.stringify({type:'move',x:state.x,z:state.z,rot:state.rotation}))}
 }
-function project(x,y,z){if(!R)return null;const m=multiply(R.proj,R.view);const q=[x,y,z,1],v=[0,0,0,0];for(let i=0;i<4;i++)for(let j=0;j<4;j++)v[i]+=m[j*4+i]*q[j];if(v[3]<=0)return null;return {x:(v[0]/v[3]+1)*innerWidth/2,y:(1-v[1]/v[3])*innerHeight/2,visible:Math.abs(v[0]/v[3])<1.2&&Math.abs(v[1]/v[3])<1.2};}
+function project(x,y,z){if(!R)return null;const m=multiply(R.proj,R.view);const q=[x,y,z,1],v=[0,0,0,0];for(let i=0;i<4;i++)for(let j=0;j<4;j++)v[i]+=m[j*4+i]*q[j];if(v[3]<=0)return null;return {x:(v[0]/v[3]+1)*$('world').clientWidth/2,y:(1-v[1]/v[3])*$('world').clientHeight/2,visible:Math.abs(v[0]/v[3])<1.2&&Math.abs(v[1]/v[3])<1.2};}
 function render(){if(!R||!state.user)return;const {gl,loc}=R;const w=$('world').clientWidth,h=$('world').clientHeight,dpr=Math.min(1.6,devicePixelRatio||1);if(gl.canvas.width!==Math.floor(w*dpr)||gl.canvas.height!==Math.floor(h*dpr)){gl.canvas.width=Math.floor(w*dpr);gl.canvas.height=Math.floor(h*dpr)}gl.viewport(0,0,gl.canvas.width,gl.canvas.height);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(R.program);
  const eye=cameraEye(state.x,state.z,state.camAngle,state.camPitch,state.camDistance);
  const target=[state.x,1.42,state.z];

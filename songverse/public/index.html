@@ -5,8 +5,19 @@
 <meta name="theme-color" content="#263d65"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><meta name="apple-mobile-web-app-title" content="SóngVerse"/><meta name="mobile-web-app-capable" content="yes"/><link rel="manifest" href="/manifest.webmanifest"/>
 <title>SóngVerse 3D V8 • Đề ôn tập Vật lý 11</title>
 <link rel="stylesheet" href="/style.css"/>
-</head>
+<style>
+#svBoot{position:fixed;inset:0;z-index:999;background:linear-gradient(145deg,#d7edff,#eee9ff);display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;color:#2b4772;padding:22px;box-sizing:border-box;text-align:center}
+#svBoot .boot-card{width:min(440px,100%);border-radius:23px;background:#fffefa;padding:23px 19px;box-shadow:0 15px 55px #36587926}
+#svBoot .boot-logo{font-size:45px}#svBoot h2{margin:10px 0 8px;font-size:22px}#svBoot p{font-size:14px;line-height:1.6}#svBoot .boot-actions{margin-top:13px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+#svBoot a,#svBoot button{background:#586fcd;color:#fff;border:0;border-radius:11px;padding:11px 16px;font:700 14px system-ui;text-decoration:none}
+#svBoot button{cursor:pointer}#svBoot .boot-secondary{background:#edf1fd;color:#4561a5}
+#svBoot .boot-help{font-size:12px;color:#71819c;margin-top:15px}
+#svBoot .boot-spinner{width:26px;height:26px;border:3px solid #cedbf9;border-top-color:#5b75d2;border-radius:50%;margin:14px auto;animation:svspin 1s linear infinite}
+@keyframes svspin{to{transform:rotate(360deg)}}
+</style></head>
 <body>
+<div id="svBoot" role="status" aria-live="polite"><div class="boot-card"><div class="boot-logo">🌊🎮</div><h2>Đang mở SóngVerse...</h2><p id="svBootMessage">Game có thể cần khoảng 1 phút để khởi động lại khi máy chủ miễn phí đang ngủ.</p><div class="boot-spinner" aria-hidden="true"></div><div class="boot-actions"><button type="button" onclick="location.reload()">↻ Tải lại</button><a class="boot-secondary" href="https://songverse-v5-game.onrender.com/?v=8.2" target="_blank" rel="noopener">Mở ở trình duyệt khác</a></div><p class="boot-help">Nếu mở từ Zalo/Messenger và bị trắng, bấm biểu tượng mở bằng Safari hoặc Chrome trong menu trình duyệt của ứng dụng.</p></div></div>
+<script>setTimeout(function(){var e=document.getElementById('svBoot');var m=document.getElementById('svBootMessage');if(e&&m)m.textContent='Trang tải lâu hơn bình thường. Hãy bấm Tải lại hoặc mở bằng Safari/Chrome nếu bạn đang ở Zalo/Messenger.';},18000);</script>
 <canvas id="world" aria-label="Thế giới chibi 3D"></canvas>
 <div id="fallback" class="hidden">Trình duyệt không hỗ trợ WebGL. Hãy mở game bằng Chrome, Edge hoặc Safari phiên bản mới.</div>
 <div id="gameUI" class="hidden">

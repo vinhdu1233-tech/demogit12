@@ -666,4 +666,6 @@ function setupMusic(){
 if(new URLSearchParams(location.search).get('debug')==='1'){window.__svDebug={state,stations,rotateAvatar:(angle)=>{state.rotation=angle;},setCamera:(angle,pitch)=>{state.camAngle=angle;state.camPitch=pitch;updateCameraLabel();},stepMovement:(dx,dz)=>{const v=movementFromView(dx,dz,state.camAngle);return v;}}}
 // Login handlers should be available before rendering starts.
 initUI();
+// Keep the lightweight loading guide until the full module graph has loaded.
+$('svBoot')?.remove();
 (async()=>{if(state.token){try{const d=await api('me');state.user=d.user;state.avatar={...d.user.avatar};$('roomInput').value=state.room;startGame();return}catch{state.token='';localStorage.removeItem('sv_token')}}showAuth();})();
